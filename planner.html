@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>План обследований — Кардио-справочник</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+  .diagnosis-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .dx-check {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r);
+    padding: 14px 16px; cursor: pointer; transition: border-color .15s, background .15s;
+  }
+  .dx-check:hover { border-color: var(--primary); }
+  .dx-check.selected { border-color: var(--primary); background: var(--primary-soft); }
+  .dx-check input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+  .dx-check { user-select: none; }
+  .dx-check .dx-name { font-weight: 700; font-size: 15px; }
+  .dx-check .dx-code { font-size: 12px; color: var(--muted); font-family: var(--mono); }
+
+  .show-btn {
+    background: var(--primary); color: #fff; border: none;
+    padding: 12px 24px; border-radius: 10px; font-size: 15px; font-weight: 700;
+    font-family: var(--font); cursor: pointer; transition: background .15s; margin-bottom: 20px;
+  }
+  .show-btn:hover { background: var(--primary-2); }
+  .show-btn:disabled { background: var(--border); cursor: not-allowed; }
+
+  /* Блок копирования */
+  .copy-block {
+    background: var(--surface); border: 2px solid var(--primary);
+    border-radius: var(--r-lg); padding: 18px 22px; margin-bottom: 18px;
+    box-shadow: var(--shadow-2); display: none;
+  }
+  .copy-block.visible { display: block; }
+  .copy-block .copy-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px; flex-wrap: wrap; gap: 8px;
+  }
+  .copy-block .copy-title { font-size: 16px; font-weight: 700; color: var(--primary-2); }
+  .copy-btn {
+    background: var(--primary); color: #fff; border: none; padding: 8px 18px;
+    border-radius: 9px; font-size: 13.5px; font-weight: 700; font-family: var(--font);
+    cursor: pointer; transition: background .15s, transform .1s;
+  }
+  .copy-btn:hover { background: var(--primary-2); transform: translateY(-1px); }
+  .copy-btn.copied { background: var(--green); }
+  .copy-text {
+    font-size: 14px; line-height: 1.65; color: var(--text);
+    white-space: pre-wrap; word-break: break-word;
+  }
+  .copy-text .cat-label { font-weight: 700; color: var(--primary); }
+  .copy-empty { color: var(--muted); font-style: italic; font-size: 13.5px; }
+
+  /* Секция результатов */
+  .results-wrap { display: none; }
+  .results-wrap.visible { display: block; }
+
+  .exam-section { margin-bottom: 14px; }
+  .exam-section-header {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 8px; margin-bottom: 8px;
+  }
+  .exam-section-title { font-size: 16px; font-weight: 700; color: var(--text); }
+  .select-all-btn {
+    background: var(--primary-soft); color: var(--primary); border: 1.5px solid var(--primary);
+    padding: 5px 14px; border-radius: 20px; font-size: 12.5px; font-weight: 700;
+    font-family: var(--font); cursor: pointer; transition: background .15s;
+  }
+  .select-all-btn:hover { background: var(--primary); color: #fff; }
+
+  /* Обязательные обследования — компактные кнопки */
+  #mandatoryList {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  #mandatoryList .exam-item {
+    display: inline-flex;
+    width: auto;
+    align-items: center;
+    margin: 0;
+    padding: 8px 13px;
+    border-radius: 20px;
+    box-shadow: none;
+  }
+  #mandatoryList .exam-item input {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    pointer-events: none;
+  }
+  #mandatoryList .exam-item .exam-name {
+    font-size: 13.5px;
+    white-space: nowrap;
+  }
+  #mandatoryList .exam-item.checked {
+    background: var(--primary-soft);
+    border-color: var(--primary);
+    color: var(--primary-2);
+  }
+
+  #conditionalList .conditional-group {
+    margin-bottom: 16px;
+  }
+  #conditionalList .conditional-group:last-child {
+    margin-bottom: 0;
+  }
+  #conditionalList .conditional-group-title {
+    color: var(--primary);
+    font-size: 13px;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: .45px;
+    padding: 7px 2px 6px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 8px;
+  }
+
+  /* Дополнительные обследования */
+  #conditionalList .exam-item {
+    display: flex;
+  }
+
+  .exam-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    background: var(--surface); border: 1.5px solid var(--border); border-radius: var(--r);
+    padding: 10px 14px; margin-bottom: 6px; cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .exam-item:hover { border-color: var(--primary); }
+  .exam-item.checked { border-color: var(--primary); background: var(--primary-softer); }
+  .exam-item input { width: 16px; height: 16px; margin-top: 2px; accent-color: var(--primary); cursor: pointer; flex-shrink: 0; }
+  .exam-item .exam-name { font-weight: 600; font-size: 14px; color: var(--text); }
+  .exam-item .exam-conditions { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .matrix-controls { display: grid; grid-template-columns: minmax(260px, 1fr); gap: 12px; margin-top: 14px; }
+  .matrix-question { display: flex; flex-direction: column; gap: 5px; color: var(--text); font-size: 13px; font-weight: 700; }
+  .matrix-question select { max-width: 420px; padding: 9px 10px; border: 1.5px solid var(--border); border-radius: 8px; font: inherit; color: var(--text); background: var(--surface); }
+  .matrix-status { margin-top: 12px; font-size: 13px; color: var(--muted); }
+  .matrix-status.ok { color: var(--green-deep); }
+  .matrix-status.error { color: var(--red, #a12626); }
+  #externalCard { border-left: 3px solid var(--orange-deep); }
+  #emergencyCard { border-left: 3px solid #b3261e; }
+  #externalList .exam-item, #emergencyList .exam-item { display: flex; }
+  #emergencyList .exam-item { background: #fff4f3; border-color: #d66a62; }
+
+  .avail-note { display:inline-block; margin-left:8px; font-size:12px; color:#7a8699; font-weight:500; }
+  .dx-group { margin-bottom:14px; }
+  .dx-group:last-child { margin-bottom:0; }
+  .dx-group-title { font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.45px; color:var(--primary); border-bottom:1px solid var(--border); padding:5px 2px 6px; margin-bottom:6px; }
+
+  /* Мгновенный тултип */
+  .exam-item { position: relative; }
+  .exam-item[data-tip]::after {
+    content: attr(data-tip);
+    position: absolute;
+    left: 10px;
+    bottom: calc(100% + 7px);
+    max-width: 360px;
+    background: #20242e;
+    color: #f4f6fa;
+    font-size: 12.5px;
+    font-weight: 500;
+    line-height: 1.45;
+    padding: 8px 11px;
+    border-radius: 8px;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, .25);
+    z-index: 60;
+    white-space: normal;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+  }
+  .exam-item[data-tip]:hover::after { opacity: 1; visibility: visible; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="topnav">
+    <span class="brand">Кардио-справочник</span>
+    <div class="nav-links">
+      <a href="index.html">Главная</a>
+      <a href="planner.html" class="active">План обследований</a>
+      <a href="ag.html">АГ (справочник)</a>
+      <a href="formulas.html">Формулировки</a>
+      <a href="ecg.html">ЭКГ</a>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="page-title">План обследований по диагнозам</div>
+  <div class="page-sub">Отметьте диагнозы пациента — получите текст для вставки в историю болезни.</div>
+
+  <!-- Выбор диагнозов -->
+  <div class="section-card">
+    <h2>Диагнозы пациента</h2>
+    <div class="diagnosis-grid" id="diagnosisGrid"></div>
+    <div class="matrix-controls">
+      <label class="matrix-question">Этап визита<select id="visitStage"></select></label>
+      <div id="matrixQuestions" class="matrix-controls"></div>
+    </div>
+    <div id="matrixStatus" class="matrix-status">Загрузка клинической матрицы…</div>
+  </div>
+
+  <!-- Блок копирования (после формирования плана) -->
+  <div class="copy-block" id="copyBlock">
+    <div class="copy-header">
+      <span class="copy-title">Текст для вставки в историю болезни</span>
+      <button class="copy-btn" id="copyBtn">Копировать</button>
+    </div>
+    <div class="copy-text" id="copyText">
+      <span class="copy-empty">Отметьте обследования ниже, чтобы сформировать текст…</span>
+    </div>
+  </div>
+
+  <!-- Списки обследований с чекбоксами (после нажатия «Показать») -->
+  <div class="results-wrap" id="resultsWrap">
+    <div class="section-card" id="mandatoryCard">
+      <div class="exam-section">
+        <div class="exam-section-header">
+          <span class="exam-section-title" style="color: var(--green-deep);">Обязательные обследования</span>
+          <button class="select-all-btn" id="toggleMandatoryBtn">Снять все</button>
+        </div>
+        <div id="mandatoryList"></div>
+      </div>
+    </div>
+    <div class="section-card" id="conditionalCard">
+      <div class="exam-section">
+        <div class="exam-section-header">
+          <span class="exam-section-title" style="color: var(--orange-deep);">Дополнительные обследования</span>
+          <button class="select-all-btn" id="toggleConditionalBtn">Выбрать все</button>
+        </div>
+        <div id="conditionalList"></div>
+      </div>
+    </div>
+    <div class="section-card" id="externalCard" style="display:none">
+      <div class="exam-section"><div class="exam-section-header"><span class="exam-section-title" style="color: var(--orange-deep);">Также рекомендовано</span></div><div id="externalList"></div></div>
+    </div>
+    <div class="section-card" id="emergencyCard" style="display:none">
+      <div class="exam-section"><div class="exam-section-header"><span class="exam-section-title" style="color:#b3261e;">Экстренная оценка</span></div><div id="emergencyList"></div></div>
+    </div>
+  </div>
+
+</div>
+
+<footer>Конспект клинических рекомендаций Минздрава РФ. Не заменяет оригинальные документы. Проверяйте актуальную редакцию.</footer>
+
+<script src="clinical_matrix_engine.js"></script>
+<script src="clinical_matrix_adapter.js"></script>
+<script src="planner_json.js"></script>
+<!-- Старый генератор сохранён ниже как резервный текст и отключён. -->
+<!--
+  const grid       = document.getElementById('diagnosisGrid');
+  const copyBlock  = document.getElementById('copyBlock');
+  const copyText   = document.getElementById('copyText');
+  const copyBtn    = document.getElementById('copyBtn');
+  const resultsWrap= document.getElementById('resultsWrap');
+  const mandList   = document.getElementById('mandatoryList');
+  const condList   = document.getElementById('conditionalList');
+  const togMand    = document.getElementById('toggleMandatoryBtn');
+  const togCond    = document.getElementById('toggleConditionalBtn');
+  const mandCard   = document.getElementById('mandatoryCard');
+  const condCard   = document.getElementById('conditionalCard');
+
+  /* ---- Инициализация списка диагнозов ---- */
+  function initDiagnoses () {
+    grid.innerHTML = '';
+    for (const [key, dx] of Object.entries(diagnoses)) {
+      const label = document.createElement('label');
+      label.className = 'dx-check';
+      label.innerHTML =
+        '<input type="checkbox" data-dx="' + key + '">' +
+        '<div><div class="dx-name">' + dx.name + '</div><div class="dx-code">' + dx.code + '</div></div>';
+      const cb = label.querySelector('input');
+      cb.addEventListener('change', function () {
+        label.classList.toggle('selected', cb.checked);
+        generatePlan();
+      });
+      grid.appendChild(label);
+    }
+  }
+
+  /* ---- Сбор отмеченных обследований ---- */
+  function collectChecked () {
+    var items = document.querySelectorAll('.exam-check');
+    var checked = { lab: [], instrumental: [], consultation: [] };
+    items.forEach(function (el) {
+      if (el.checked) {
+        var t = el.dataset.type;
+        checked[t].push(el.dataset.name);
+      }
+    });
+    return checked;
+  }
+
+  /* ---- Обновление текста для копирования ---- */
+  function updateCopyText () {
+    var c = collectChecked();
+    var parts = [];
+    typeOrder.forEach(function (t) {
+      if (c[t].length > 0) {
+        parts.push('<span class="cat-label">' + typeLabels[t] + ':</span> ' + c[t].join(', '));
+      }
+    });
+    if (parts.length === 0) {
+      copyText.innerHTML = '<span class="copy-empty">Отметьте обследования ниже…</span>';
+    } else {
+      copyText.innerHTML = parts.join('<br><br>');
+    }
+  }
+
+  /* ---- Создание элемента обследования ---- */
+  function makeExamItem (exam, checked) {
+    var div = document.createElement('label');
+    div.className = 'exam-item' + (checked ? ' checked' : '');
+    var html = '<input type="checkbox" class="exam-check" data-name="' + exam.name + '" data-type="' + exam.type + '"' + (checked ? ' checked' : '') + '>';
+    html += '<div><div class="exam-name">' + exam.name + '</div>';
+    if (exam.conditions) {
+      html += '<div class="exam-conditions">Показания: <span>' + exam.conditions.join('; ') + '</span></div>';
+    }
+    html += '</div>';
+    div.innerHTML = html;
+    var cb = div.querySelector('input');
+    cb.addEventListener('change', function () {
+      div.classList.toggle('checked', cb.checked);
+      updateCopyText();
+    });
+    return div;
+  }
+
+  /* ---- Генерация результатов ---- */
+  function generatePlan () {
+    var checkedDx = Array.from(document.querySelectorAll('.dx-check input:checked')).map(function (el) { return el.dataset.dx; });
+    if (checkedDx.length === 0) {
+      resultsWrap.classList.remove('visible');
+      copyBlock.classList.remove('visible');
+      return;
+    }
+
+    var allMandatory = [];
+    var allConditional = [];
+    var seenMand = {};
+    var seenCond = {};
+
+    checkedDx.forEach(function (dxKey) {
+      var dx = diagnoses[dxKey];
+      if (!dx) return;
+      dx.mandatory.forEach(function (e) {
+        if (!seenMand[e.name]) { seenMand[e.name] = true; allMandatory.push(e); }
+      });
+      dx.conditional.forEach(function (e) {
+        if (!seenCond[e.name]) { seenCond[e.name] = true; allConditional.push(e); }
+      });
+    });
+
+    /* Обязательные — все отмечены */
+    mandList.innerHTML = '';
+    allMandatory.forEach(function (e) { mandList.appendChild(makeExamItem(e, true)); });
+
+    /* Дополнительные — сгруппированы по типу */
+    condList.innerHTML = '';
+    var conditionalGroups = {
+      lab: 'Лабораторные методы',
+      instrumental: 'Инструментальные методы',
+      consultation: 'Консультации специалистов'
+    };
+    typeOrder.forEach(function (type) {
+      var exams = allConditional.filter(function (e) { return e.type === type; });
+      if (!exams.length) return;
+      var group = document.createElement('div');
+      group.className = 'conditional-group';
+      group.innerHTML = '<div class="conditional-group-title">' + conditionalGroups[type] + '</div>';
+      exams.forEach(function (e) { group.appendChild(makeExamItem(e, false)); });
+      condList.appendChild(group);
+    });
+
+    mandCard.style.display = allMandatory.length ? '' : 'none';
+    condCard.style.display = allConditional.length ? '' : 'none';
+    resultsWrap.classList.add('visible');
+    copyBlock.classList.add('visible');
+
+    togMand.textContent = 'Снять все';
+    togCond.textContent = 'Выбрать все';
+    updateCopyText();
+  }
+
+  /* ---- Кнопки «Выбрать все» / «Снять все» ---- */
+  function toggleSection (container, btn) {
+    var cbs = container.querySelectorAll('.exam-check');
+    var allChecked = Array.from(cbs).every(function (c) { return c.checked; });
+    cbs.forEach(function (c) {
+      c.checked = !allChecked;
+      c.closest('.exam-item').classList.toggle('checked', !allChecked);
+    });
+    btn.textContent = allChecked ? 'Выбрать все' : 'Снять все';
+    updateCopyText();
+  }
+
+  togMand.addEventListener('click', function () { toggleSection(mandList, togMand); });
+  togCond.addEventListener('click', function () { toggleSection(condList, togCond); });
+
+  /* ---- Копирование ---- */
+  copyBtn.addEventListener('click', function () {
+    var c = collectChecked();
+    var parts = [];
+    typeOrder.forEach(function (t) {
+      if (c[t].length > 0) {
+        parts.push(typeLabels[t] + ': ' + c[t].join(', '));
+      }
+    });
+    var text = parts.join('\n\n');
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(function () {
+      copyBtn.textContent = '✓ Скопировано';
+      copyBtn.classList.add('copied');
+      setTimeout(function () { copyBtn.textContent = 'Копировать'; copyBtn.classList.remove('copied'); }, 2000);
+    });
+  });
+
+  /* ---- Старт ---- */
+  initDiagnoses();
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ЭКГ — конструктор заключения</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+  /* === НОВЫЙ ЛЕЙАУТ: асимметричная сетка 65/35, контейнер 1400px === */
+  .ecg-container { max-width: 1400px; margin: 0 auto; padding: 22px 18px 50px; }
+
+  .ecg-grid {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    gap: 20px;
+    align-items: start;
+  }
+
+  /* Полоска пола пациента */
+  .sex-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--r);
+    padding: 10px 20px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-1);
+  }
+  .sex-bar .lbl { margin: 0; white-space: nowrap; }
+
+  /* На узких экранах: одна колонка */
+  @media (max-width: 900px) {
+    .ecg-grid { grid-template-columns: 1fr; }
+    .results { position: static !important; }
+  }
+
+  /* === КАРТОЧКИ === */
+  .card {
+    background: var(--surface);
+    border: 1.5px solid var(--border);
+    border-radius: var(--r);
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    box-shadow: var(--shadow-1);
+  }
+  .card h2 {
+    font-size: 16px; color: var(--primary);
+    border-bottom: 2px solid var(--primary-soft);
+    padding-bottom: 8px; margin: 0 0 14px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .card h2 .num {
+    background: var(--primary);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 800;
+    width: 24px; height: 24px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  /* === ПРАВАЯ КОЛОНКА: результат === */
+  .results { position: sticky; top: 16px; }
+
+  .result-card {
+    background: linear-gradient(135deg, #f8fbfe 0%, #eef3f9 100%);
+    border: 2px solid var(--primary);
+    border-radius: var(--r);
+    padding: 20px 24px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 16px -4px rgba(11, 92, 138, .15);
+  }
+  .result-card h2 {
+    font-size: 17px;
+    color: var(--primary);
+    border-bottom: 2px solid var(--primary-soft);
+    padding-bottom: 8px;
+    margin: 0 0 14px;
+  }
+
+  /* === ПОЛЯ ВВОДА === */
+  .row { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-bottom: 10px; }
+  .field { display: flex; flex-direction: column; gap: 4px; margin-bottom: 10px; min-width: 140px; flex: 1 1 auto; }
+  label.lbl { font-weight: 600; font-size: 12.5px; color: var(--muted); }
+  input, select, textarea {
+    font-family: var(--font); font-size: 14px;
+    padding: 9px 11px; border: 1.5px solid var(--border);
+    border-radius: var(--r-sm); background: #fff; color: var(--text); width: 100%;
+    transition: border-color .12s, box-shadow .12s;
+  }
+  input:focus, select:focus, textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+  input.fld-warn, select.fld-warn { border-color: var(--orange); background: var(--orange-soft); }
+  input.fld-bad, select.fld-bad { border-color: var(--red); background: var(--red-soft); }
+
+  /* === ЧИПЫ === */
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chk {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--primary-soft); border: 1.5px solid transparent;
+    border-radius: 20px; padding: 5px 12px; cursor: pointer;
+    font-size: 13px; font-weight: 600; color: var(--primary-2);
+    user-select: none; transition: background .12s, border-color .12s, color .12s;
+  }
+  .chk input { display: none; }
+  .chk.on { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+  /* === ПОДБЛОКИ === */
+  .sub { margin: 10px 0 6px; padding-left: 12px; border-left: 3px solid var(--primary-soft); }
+  .sub .field { min-width: 130px; }
+
+  /* === ПОДСКАЗКИ === */
+  .hint { font-size: 12.5px; padding: 9px 13px; border-radius: 0 var(--r-sm) var(--r-sm) 0; margin: 6px 0; display: none; border-left: 4px solid; }
+  .hint.warn { display: block; background: var(--orange-soft); border-color: var(--orange); color: var(--orange-deep); line-height: 1.45; }
+  .hint.bad { display: block; background: var(--red-soft); border-color: var(--red); color: var(--red-deep); line-height: 1.45; }
+  .hint.ok { display: block; background: var(--green-soft); border-color: var(--green); color: var(--green-deep); line-height: 1.45; }
+
+  /* === ВЫВОД === */
+  .out {
+    white-space: pre-wrap;
+    font-family: var(--mono, 'Consolas', 'SF Mono', Menlo, monospace);
+    font-size: 13.5px; line-height: 1.6;
+    background: #fff;
+    border: 1.5px solid var(--border);
+    border-radius: var(--r);
+    padding: 14px 16px;
+    min-height: 200px;
+    color: var(--text);
+  }
+
+  /* === КНОПКИ === */
+  .btns { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 12px; align-items: center; }
+  button.act {
+    font-family: var(--font); font-weight: 700; font-size: 14px; border: none;
+    border-radius: var(--r-sm); padding: 10px 18px; cursor: pointer;
+    transition: background .15s, transform .12s;
+  }
+  button.act:hover { transform: translateY(-1px); }
+  .primary { background: var(--primary); color: #fff; box-shadow: var(--shadow-primary); }
+  .primary:hover { background: var(--primary-2); }
+  .ghost { background: #fff; color: var(--primary); border: 1.5px solid var(--border); }
+  .ghost:hover { background: var(--primary-softer); }
+
+  /* === ПРЕСЕТЫ === */
+  .presets { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; }
+  .preset {
+    background: var(--primary-soft); border: 1.5px solid transparent;
+    color: var(--primary-2); border-radius: var(--r-sm);
+    padding: 8px 14px; font-weight: 600; font-size: 13px; cursor: pointer; transition: background .12s;
+  }
+  .preset:hover { background: var(--primary); color: #fff; }
+
+  /* === ПЕРЕКЛЮЧАТЕЛЬ РЕЖИМА === */
+  .toggle { display: inline-flex; background: var(--primary-soft); border-radius: 20px; padding: 3px; gap: 3px; }
+  .toggle button { border: none; background: transparent; padding: 6px 14px; border-radius: 17px; font-weight: 600; font-size: 13px; cursor: pointer; color: var(--primary-2); }
+  .toggle button.on { background: var(--primary); color: #fff; }
+
+  .chk.hidden { display: none; }
+
+  /* === ТОСТ === */
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--primary-2); color: #fff; padding: 11px 22px; border-radius: 10px; opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; z-index: 50; font-weight: 600; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .small { font-size: 12.5px; color: var(--muted); }
+
+  /* Динамика — объединённый подблок */
+  .dyn-group {
+    background: var(--surface-2);
+    border: 1.5px solid var(--border);
+    border-radius: var(--r-sm);
+    padding: 12px 14px;
+    margin-top: 12px;
+  }
+  .dyn-group .lbl { margin-bottom: 6px; display: block; }
+  .dyn-group .row { margin-bottom: 6px; }
+</style>
+</head>
+<body>
+<header>
+  <div class="topnav">
+    <span class="brand">❤️ Кардио-справочник</span>
+    <div class="nav-links">
+      <a href="index.html">Главная</a>
+      <a href="planner.html">План обследований</a>
+      <a href="ag.html">АГ</a>
+      <a href="formulas.html">Формулировки</a>
+      <a href="ecg.html" class="active">ЭКГ</a>
+    </div>
+  </div>
+</header>
+
+<div class="ecg-container">
+  <div class="page-title">Конструктор заключения ЭКГ</div>
+  <div class="page-sub">Заполняйте поля — текст заключения собирается автоматически.</div>
+
+  <!-- ПОЛ ПАЦИЕНТА — глобальный параметр над всеми блоками -->
+  <div class="sex-bar">
+    <label class="lbl">Пол пациента:</label>
+    <div class="toggle" id="sexToggle">
+      <button data-s="m" class="on">♂ Мужской</button>
+      <button data-s="f">♀ Женский</button>
+    </div>
+    <select id="sex" style="display:none;">
+      <option value="m">Мужской</option>
+      <option value="f">Женский</option>
+    </select>
+  </div>
+
+  <div class="ecg-grid">
+    <!-- ЛЕВАЯ КОЛОНКА: ввод данных -->
+    <div>
+      <!-- БЛОК 1: на полную ширину -->
+      <div class="card">
+        <h2><span class="num">1</span> Ритм и проведение</h2>
+        <div class="row">
+          <div class="field" style="flex:2 1 220px;">
+            <label class="lbl">Ритм</label>
+            <select id="rhythm">
+              <option value="sinus">Синусовый</option>
+              <option value="atrial">Предсердный</option>
+              <option value="avnodal">АВ-узловой</option>
+              <option value="af">Фибрилляция предсердий</option>
+              <option value="flutter">Трепетание предсердий</option>
+              <option value="svt">Наджелудочковая тахикардия</option>
+              <option value="vt">Желудочковая тахикардия</option>
+              <option value="pacer">ЭКС</option>
+            </select>
+          </div>
+          <div class="field" style="flex:1 1 120px;max-width:160px;">
+            <label class="lbl" id="hrLabel">ЧСС, в мин</label>
+            <input id="hr" type="number" inputmode="numeric" placeholder="72">
+          </div>
+          <div class="chips" id="regularity" style="flex:1 1 200px;align-self:flex-end;padding-bottom:4px;">
+            <label class="chk"><input type="checkbox" data-k="reg">Правильный</label>
+            <label class="chk"><input type="checkbox" data-k="irreg">Нерегулярный</label>
+                      <label class="chk"><input type="checkbox" data-k="sinusArr">Синусовая аритмия</label>
+                    </div>
+        </div>
+
+        <div class="row" id="rhythmExtras">
+          <div class="field" id="flutterRatioWrap" style="display:none;max-width:220px;">
+            <label class="lbl">Проведение (F:QRS)</label>
+            <select id="flutterRatio">
+              <option value="2:1">2:1</option>
+              <option value="3:1">3:1</option>
+              <option value="4:1">4:1</option>
+              <option value="var">переменное</option>
+            </select>
+          </div>
+          <div class="field" id="pacerModeWrap" style="display:none;max-width:200px;">
+            <label class="lbl">Режим ЭКС</label>
+            <select id="pacerMode">
+              <option value="AAI">AAI</option>
+              <option value="VVI">VVI</option>
+              <option value="DDD">DDD</option>
+              <option value="DDDR">DDDR</option>
+              <option value="VVIR">VVIR</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="field" style="max-width:400px;">
+          <label class="lbl">АВ-проводимость</label>
+          <select id="avBlock">
+            <option value="none">Нормальное АВ-проведение</option>
+            <option value="avb1">АВ-блокада I степени</option>
+            <option value="avb2_1">АВ-блокада II ст. Мобитц I (Самойлова-Венкебаха)</option>
+            <option value="avb2_2">АВ-блокада II ст. Мобитц II</option>
+            <option value="avb2_fixed">АВ-блокада II ст. 2:1</option>
+            <option value="avb3">АВ-блокада III ст. (полная)</option>
+          </select>
+        </div>
+
+        <div class="hint" id="b1Hint"></div>
+        <div class="hint" id="pqHint"></div>
+      </div>
+
+      <!-- БЛОК 2: на полную ширину -->
+      <div class="card">
+        <h2><span class="num">2</span> ЭОС и интервалы</h2>
+        <div class="row">
+          <div class="field" style="flex:2 1 200px;max-width:280px;">
+            <label class="lbl">ЭОС</label>
+            <select id="axis">
+              <option value="normal">Нормальная</option>
+              <option value="vertical">Вертикальная</option>
+              <option value="horizontal">Горизонтальная</option>
+              <option value="left">Отклонена влево</option>
+              <option value="right">Отклонена вправо</option>
+              <option value="extleft">Резко влево</option>
+              <option value="extright">Резко вправо</option>
+              <option value="indet">Неопределённая</option>
+            </select>
+          </div>
+          <div class="field" style="flex:0 1 90px;max-width:110px;">
+            <label class="lbl">α, °</label>
+            <input id="alpha" type="number" placeholder="—">
+          </div>
+          <div class="field" style="flex:0 1 90px;max-width:110px;">
+            <label class="lbl">PQ, мс</label>
+            <input id="pq" type="number" placeholder="160">
+          </div>
+          <div class="field" style="flex:0 1 90px;max-width:110px;">
+            <label class="lbl">QRS, мс</label>
+            <input id="qrs" type="number" placeholder="88">
+          </div>
+          <div class="field" style="flex:0 1 90px;max-width:110px;">
+            <label class="lbl">QT, мс</label>
+            <input id="qt" type="number" placeholder="380">
+          </div>
+          <div class="field" style="flex:0 1 90px;max-width:110px;">
+            <label class="lbl">QTc, мс</label>
+            <input id="qtcManual" type="number" placeholder="авто">
+          </div>
+          <div class="field" style="flex:1 1 150px;max-width:200px;">
+            <label class="lbl">QTc-формула</label>
+            <select id="qtcFormula">
+              <option value="auto">Автовыбор</option>
+              <option value="bazett">Bazett</option>
+              <option value="fridericia">Fridericia</option>
+              <option value="framingham">Framingham</option>
+            </select>
+          </div>
+        </div>
+        <div class="hint" id="qrsHint"></div>
+        <div class="hint" id="qtHint"></div>
+      </div>
+
+      <!-- БЛОК 3: на полную ширину -->
+      <div class="card">
+        <h2><span class="num">3</span> Зубец P и предсердная активность</h2>
+        <div class="chips" id="pWave">
+          <label class="chk"><input type="checkbox" data-k="sinus">Синусовый</label>
+          <label class="chk"><input type="checkbox" data-k="absent">Отсутствует</label>
+          <label class="chk"><input type="checkbox" data-k="f">f-волны</label>
+          <label class="chk"><input type="checkbox" data-k="F">F-волны</label>
+          <label class="chk"><input type="checkbox" data-k="mitrale">P-mitrale</label>
+          <label class="chk"><input type="checkbox" data-k="pulmonale">P-pulmonale</label>
+          <label class="chk"><input type="checkbox" data-k="neg23">Отрицательный в II,III,aVF</label>
+          <label class="chk"><input type="checkbox" data-k="wandering">Миграция водителя ритма</label>
+        </div>
+        <div class="sub" id="fAmpWrap" style="display:none;">
+          <div class="field" style="max-width:250px;">
+            <label class="lbl">Амплитуда f-волн</label>
+            <select id="fAmp">
+              <option value="">— не указана</option>
+              <option value="coarse">Крупноволновые</option>
+              <option value="fine">Мелковолновые</option>
+            </select>
+          </div>
+        </div>
+        <div class="sub" id="pLeadsWrap" style="display:none;">
+          <label class="lbl">Отведения (уточнение):</label>
+          <div class="chips" id="pLeads">
+            <label class="chk"><input type="checkbox" data-k="II">II</label>
+            <label class="chk"><input type="checkbox" data-k="III">III</label>
+            <label class="chk"><input type="checkbox" data-k="aVF">aVF</label>
+            <label class="chk"><input type="checkbox" data-k="V1">V1</label>
+            <label class="chk"><input type="checkbox" data-k="V4">V4</label>
+            <label class="chk"><input type="checkbox" data-k="V6">V6</label>
+          </div>
+        </div>
+        <div class="sub" id="pPositionWrap" style="display:none;">
+          <div class="field" style="max-width:320px;">
+            <label class="lbl">Положение P относительно QRS</label>
+            <select id="pPosition">
+              <option value="">— не указано</option>
+              <option value="before">Перед QRS (P-R &lt; 0.12 с)</option>
+              <option value="fused">Слитно с QRS (P не виден)</option>
+              <option value="after">После QRS (на сегменте ST)</option>
+            </select>
+          </div>
+        </div>
+        <div class="hint" id="pHint"></div>
+      </div>
+
+      <!-- БЛОК 4 -->
+      <div class="card">
+        <h2><span class="num">4</span> Комплекс QRS и блокады</h2>
+        <div class="chips" id="blocks">
+          <label class="chk"><input type="checkbox" data-k="pblnpnpg">ПБЛНПГ</label>
+          <label class="chk"><input type="checkbox" data-k="pbpnpnpg">ПБПНПГ</label>
+          <label class="chk"><input type="checkbox" data-k="bpvlnpng">БПВЛНПГ</label>
+          <label class="chk"><input type="checkbox" data-k="bzvlnpng">БЗВЛНПГ</label>
+          <label class="chk"><input type="checkbox" data-k="bifasc">Бифасцикулярная</label>
+          <label class="chk"><input type="checkbox" data-k="nsivcd">Неспецифическая ВЖНПГ</label>
+        </div>
+        <div class="sub">
+          <label class="lbl">Патологический Q:</label>
+          <div class="chips" id="pathQ">
+            <label class="chk"><input type="checkbox" data-k="inf">Нижняя (II,III,aVF)</label>
+            <label class="chk"><input type="checkbox" data-k="ant">Передняя (V1–V4)</label>
+            <label class="chk"><input type="checkbox" data-k="lat">Боковая (V5–V6,I,aVL)</label>
+            <label class="chk"><input type="checkbox" data-k="post">Задняя (V7–V9)</label>
+          </div>
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <div class="field" style="max-width:200px;">
+            <label class="lbl">Переходная зона</label>
+            <select id="rz">
+              <option value="">—</option>
+              <option value="V2">V2</option><option value="V3">V3</option>
+              <option value="V4">V4</option><option value="V5">V5</option>
+              <option value="left">Смещена влево</option>
+              <option value="right">Смещена вправо</option>
+            </select>
+          </div>
+          <div class="field" style="max-width:130px;"><label class="lbl">ВНО V1, мс</label><input id="vnoV1" type="number" placeholder="—"></div>
+          <div class="field" style="max-width:130px;"><label class="lbl">ВНО V6, мс</label><input id="vnoV6" type="number" placeholder="—"></div>
+        </div>
+      </div>
+
+      <!-- БЛОК 5 -->
+      <div class="card">
+        <h2><span class="num">5</span> Сегмент ST и зубец T</h2>
+        <div class="chips" id="stElWrap">
+          <label class="chk"><input type="checkbox" data-k="on">Элевация ST</label>
+        </div>
+        <div class="sub" id="stElBody" style="display:none;">
+          <div class="chips" id="stElLeads">
+            <label class="chk"><input type="checkbox" data-k="ii_iii_avf">II,III,aVF</label>
+            <label class="chk"><input type="checkbox" data-k="v1_v4">V1–V4</label>
+            <label class="chk"><input type="checkbox" data-k="v5_v6">V5–V6,I,aVL</label>
+          </div>
+          <div class="row">
+            <div class="field" style="max-width:200px;"><label class="lbl">Тип</label>
+              <select id="stElType"><option value="horiz">Горизонтальная</option><option value="convex">Выпуклая кверху</option><option value="asc">Косовосходящая</option></select>
+            </div>
+            <div class="field" style="max-width:250px;"><label class="lbl">Макс. до ___ мм в отв. ___</label><input id="stElMax" placeholder="напр. 3 мм в V2"></div>
+          </div>
+          <div class="chips" id="recip" style="margin-top:6px;">
+            <label class="chk"><input type="checkbox" data-k="y">Реципрокные изменения</label>
+          </div>
+        </div>
+
+        <div class="chips" id="stDepWrap" style="margin-top:10px;">
+          <label class="chk"><input type="checkbox" data-k="on">Депрессия ST</label>
+        </div>
+        <div class="sub" id="stDepBody" style="display:none;">
+          <div class="chips" id="stDepLeads">
+            <label class="chk"><input type="checkbox" data-k="ii_iii_avf">II,III,aVF</label>
+            <label class="chk"><input type="checkbox" data-k="v1_v4">V1–V4</label>
+            <label class="chk"><input type="checkbox" data-k="v5_v6">V5–V6,I,aVL</label>
+          </div>
+          <div class="row">
+            <div class="field" style="max-width:200px;"><label class="lbl">Тип</label>
+              <select id="stDepType"><option value="horiz">Горизонтальная</option><option value="desc">Косонисходящая</option><option value="asc">Косовосходящая</option></select>
+            </div>
+            <div class="field" style="max-width:250px;"><label class="lbl">Макс. до ___ мм в отв. ___</label><input id="stDepMax" placeholder="напр. 2 мм в V5"></div>
+          </div>
+        </div>
+
+        <div class="chips" id="stIsoWrap" style="margin-top:10px;">
+          <label class="chk"><input type="checkbox" data-k="on">ST на изолинии</label>
+        </div>
+
+        <div class="sub" style="margin-top:12px;">
+          <label class="lbl">Зубец T:</label>
+          <div class="chips" id="tWave">
+            <label class="chk"><input type="checkbox" data-k="pos">Положительный</label>
+            <label class="chk"><input type="checkbox" data-k="negcor">Отр. симметричный (коронарный)</label>
+            <label class="chk"><input type="checkbox" data-k="negasym">Отр. асимметричный</label>
+            <label class="chk"><input type="checkbox" data-k="smooth">Сглажен</label>
+            <label class="chk"><input type="checkbox" data-k="iso">Изоэлектричен</label>
+            <label class="chk"><input type="checkbox" data-k="tall">Высокий остроконечный</label>
+            <label class="chk"><input type="checkbox" data-k="disc">Дискордантен QRS</label>
+          </div>
+        </div>
+        <div class="sub">
+          <label class="lbl">Локализация T:</label>
+          <div class="chips" id="tLoc">
+            <label class="chk"><input type="checkbox" data-k="inf">Нижняя</label>
+            <label class="chk"><input type="checkbox" data-k="ant">Передняя</label>
+            <label class="chk"><input type="checkbox" data-k="lat">Боковая</label>
+            <label class="chk"><input type="checkbox" data-k="glob">Глобально</label>
+          </div>
+        </div>
+        <div class="hint" id="stHint"></div>
+      </div>
+
+      <!-- БЛОК 6 -->
+      <div class="card">
+        <h2><span class="num">6</span> Дополнительные находки</h2>
+        <div class="chips" id="extra">
+          <label class="chk"><input type="checkbox" data-k="lvh_corn">ГЛЖ (Корнелльский)</label>
+          <label class="chk"><input type="checkbox" data-k="lvh_sl">ГЛЖ (Соколов–Лайон)</label>
+          <label class="chk"><input type="checkbox" data-k="erp">Ранняя реполяризация</label>
+          <label class="chk"><input type="checkbox" data-k="wpw">WPW</label>
+          <label class="chk"><input type="checkbox" data-k="glyc">Гликозидный эффект</label>
+          <label class="chk"><input type="checkbox" data-k="ekg_pacer">ЭКС</label>
+          <label class="chk"><input type="checkbox" data-k="pericard">Перикардит</label>
+          <label class="chk"><input type="checkbox" data-k="hyperK">Гиперкалиемия</label>
+        </div>
+        <div class="sub row" id="lvhCornWrap" style="display:none;">
+          <div class="field" style="max-width:200px;"><label class="lbl">R aVL + S V3, мм</label><input id="cornVal" type="number" placeholder="—"></div>
+        </div>
+        <div class="sub row" id="lvhSlWrap" style="display:none;">
+          <div class="field" style="max-width:200px;"><label class="lbl">S V1 + R V5/V6, мм</label><input id="slVal" type="number" placeholder="—"></div>
+        </div>
+        <div class="sub" id="pacerWrap" style="display:none;">
+          <div class="small" style="margin-bottom:6px;">Режим — в блоке 1. Здесь — детали.</div>
+          <div class="row">
+            <label class="chk" id="pacerSpkLbl"><input type="checkbox" id="pacerSpk">спайки</label>
+            <div class="field" style="max-width:260px;margin-bottom:0;"><label class="lbl">Захват</label>
+              <select id="pacerCap">
+                <option value="">— не указан</option>
+                <option value="эффективный предсердный захват">предсердный</option>
+                <option value="эффективный желудочковый захват">желудочковый</option>
+                <option value="эффективный бивентрикулярный захват">бивентрикулярный</option>
+                <option value="неэффективная стимуляция">неэффективная</option>
+              </select>
+            </div>
+          </div>
+          <div class="field"><label class="lbl">Прочее по ЭКС</label><input id="pacerNote" placeholder="сенсинг, пороги…"></div>
+        </div>
+        <div class="hint" id="b6Hint"></div>
+      </div>
+    </div>
+
+    <!-- ПРАВАЯ КОЛОНКА: результат -->
+    <div class="results">
+      <div class="result-card">
+        <h2>📋 Заключение ЭКГ</h2>
+        <div id="out" class="out"></div>
+        <div class="btns">
+          <button class="act primary" id="copyBtn">📋 Скопировать</button>
+          <button class="act ghost" id="clearBtn">🗑 Очистить</button>
+        </div>
+        <div class="btns" style="margin-top:10px;">
+          <div class="toggle" id="modeToggle">
+            <button data-m="brief" class="on">Кратко</button>
+            <button data-m="full">Полное</button>
+          </div>
+        </div>
+
+        <div class="dyn-group">
+          <label class="lbl">Сравнение с предыдущей ЭКГ</label>
+          <div class="row" style="margin-top:6px;">
+            <select id="dyn" style="flex:1 1 160px;">
+              <option value="">Без динамики</option>
+              <option value="pos">Положительная</option>
+              <option value="neg">Отрицательная</option>
+              <option value="new">Впервые выявлено</option>
+            </select>
+            <input id="dynDate" type="date" style="flex:1 1 140px;">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>⚡ Пресеты</h2>
+        <div class="presets" id="presets"></div>
+        <div class="btns" style="margin-top:10px;">
+          <button class="act ghost" id="savePreset">💾 Сохранить</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// === ВЕСЬ JS ОСТАЁТСЯ БЕЗ ИЗМЕНЕНИЙ ===
+// Скопируйте сюда полный блок <script> из предыдущей версии файла.
+// Единственное изменение: замените .container на .ecg-container в CSS,
+// но JS не обращается к контейнеру по классу, поэтому код работает как есть.
+
+const PRESETS = {
+  "Норма": {rhythm:"sinus",axis:"normal",reg:true,sinus:true,stIso:true,tWave:{pos:true}},
+  "ФП, тахисистолия": {rhythm:"af",hr:120,irreg:true,absent:true,f:true},
+  "ТП 2:1": {rhythm:"flutter",flutterRatio:"2:1",hr:150,reg:true,absent:true,F:true},
+  "ПБЛНПГ": {rhythm:"sinus",axis:"left",reg:true,sinus:true,qrs:130,pblnpnpg:true,tWave:{disc:true}},
+  "ПБПНПГ": {rhythm:"sinus",axis:"normal",reg:true,sinus:true,qrs:125,pbpnpnpg:true},
+  "ОКС, передний ИМ": {rhythm:"sinus",axis:"normal",reg:true,sinus:true,stElOn:true,stElLeads:{v1_v4:true},stElType:"convex",stElMax:"4 мм в V2",recip:true,stDepOn:true,stDepLeads:{ii_iii_avf:true}}
+};
+const STORE_KEY = "ecgBuilderV2";
+
+const S = {
+  rhythm:"sinus", pacerMode:"AAI", hr:"", reg:false, irreg:false, sinusArr:false, pPosition:"",
+  sex:"m", flutterRatio:"2:1",
+  axis:"normal", alpha:"", pq:"", qrs:"", qt:"", qtcManual:"", qtcFormula:"auto",
+  avBlock:"none",
+  pWave:{sinus:false,absent:false,f:false,F:false,mitrale:false,pulmonale:false,neg23:false,wandering:false},
+  fAmp:"", pLeads:{},
+  blocks:{pblnpnpg:false,pbpnpnpg:false,bpvlnpng:false,bzvlnpng:false,bifasc:false,nsivcd:false},
+  pathQ:{inf:false,ant:false,lat:false,post:false},
+  rz:"", vnoV1:"", vnoV6:"",
+  stElOn:false, stElLeads:{}, stElType:"convex", stElMax:"", recip:false,
+  stDepOn:false, stDepLeads:{}, stDepType:"horiz", stDepMax:"",
+  stIso:false,
+  tWave:{pos:false,negcor:false,negasym:false,smooth:false,iso:false,tall:false,disc:false},
+  tLoc:{inf:false,ant:false,lat:false,glob:false},
+  extra:{lvh_corn:false,lvh_sl:false,erp:false,wpw:false,glyc:false,ekg_pacer:false,pericard:false,hyperK:false},
+  cornVal:"", slVal:"",
+  pacerSpk:false, pacerCap:"", pacerNote:"",
+  mode:"brief", dyn:"", dynDate:""
+};
+
+function saveState(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(S)); }catch(e){} }
+function loadState(){ try{ const r=localStorage.getItem(STORE_KEY); if(r){ const o=JSON.parse(r); mergeInto(S,o); } }catch(e){} }
+
+function scalarObj(pairs){
+  const o={};
+  for(const k in pairs){
+    const field=pairs[k];
+    Object.defineProperty(o,k,{ get:()=>S[field], set:v=>{S[field]=v;}, enumerable:true });
+  }
+  return o;
+}
+
+const regObj = {
+  get reg(){ return S.reg; },
+  set reg(v){ S.reg=v; if(v){ S.irreg=false; S.sinusArr=false; } },
+  get irreg(){ return S.irreg; },
+  set irreg(v){ S.irreg=v; if(v){ S.reg=false; S.sinusArr=false; } },
+  get sinusArr(){ return S.sinusArr; },
+  set sinusArr(v){ S.sinusArr=v; if(v){ S.reg=false; S.irreg=false; } }
+};
+
+const pWaveObj = new Proxy(S.pWave, {
+  set(t, k, v){
+    t[k] = v;
+    if (v === true) {
+      if (k === "sinus")     { t.f=false; t.F=false; t.absent=false; t.wandering=false; t.neg23=false; S.pPosition=""; }
+      if (k === "f")         { t.sinus=false; t.F=false; t.wandering=false; t.neg23=false; S.pPosition=""; }
+      if (k === "F")         { t.sinus=false; t.f=false; t.wandering=false; t.neg23=false; S.pPosition=""; }
+      if (k === "absent")    { t.sinus=false; t.wandering=false; t.neg23=false; S.pPosition=""; }
+      if (k === "wandering") { t.sinus=false; t.f=false; t.F=false; t.absent=false; t.neg23=false; S.pPosition=""; }
+      if (k === "neg23")     { t.sinus=false; t.f=false; t.F=false; t.absent=false; t.wandering=false; }
+    }
+    if (v === false && k === "neg23") { S.pPosition = ""; }
+    if (!t.f) S.fAmp = "";
+    return true;
+  }
+});
+
+function pLeadsNeeded(){ return !!(S.pWave.f||S.pWave.F||S.pWave.mitrale||S.pWave.pulmonale||S.pWave.neg23); }
+
+function refreshPVisibility(){
+  $("fAmpWrap").style.display = S.pWave.f ? "block" : "none";
+  $("pLeadsWrap").style.display = pLeadsNeeded() ? "block" : "none";
+}
+
+const stElOnProxy = { get on(){ return S.stElOn; }, set on(v){ S.stElOn=v; if(v) S.stIso=false; } };
+const stDepOnProxy = { get on(){ return S.stDepOn; }, set on(v){ S.stDepOn=v; if(v) S.stIso=false; } };
+const stIsoProxy = { get on(){ return S.stIso; }, set on(v){ S.stIso=v; if(v){ S.stElOn=false; S.stDepOn=false; } } };
+const recipObj = scalarObj({y:"recip"});
+
+const $ = id=>document.getElementById(id);
+function toast(msg){ const t=$("toast"); t.textContent=msg; t.classList.add("show"); setTimeout(()=>t.classList.remove("show"),1600); }
+
+function qtcAll(qt, hr){
+  if(!qt || !hr || hr<=0) return null;
+  const rr = 60/hr;
+  return { bazett: qt/Math.sqrt(rr), fridericia: qt/Math.cbrt(rr), framingham: qt+154*(1-rr) };
+}
+
+function fmt(n,d=0){ return (Math.round(n*Math.pow(10,d))/Math.pow(10,d)).toFixed(d); }
+function fmtDate(v){ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(v||""); return m? m[3]+"."+m[2]+"."+m[1]:""; }
+
+function build(){
+  const qtc = qtcAll(num(S.qt), num(S.hr));
+  const lines = [];
+  const full = [];
+
+  const RM = {sinus:"синусовый",atrial:"предсердный",avnodal:"АВ-узловой",af:"фибрилляция предсердий",flutter:"трепетание предсердий",svt:"наджелудочковая тахикардия",vt:"желудочковая тахикардия",pacer:"кардиостимулятора (ЭКС)"};
+  let rhythmType = RM[S.rhythm]||S.rhythm;
+  if(S.rhythm==="pacer") rhythmType += " в режиме " + S.pacerMode;
+  if(S.rhythm==="flutter") rhythmType += " с проведением " + S.flutterRatio;
+
+  const hrVal = num(S.hr);
+  const isSinusTach = (S.rhythm==="sinus" && hrVal!==null && hrVal>100);
+  const isSinusBrady = (S.rhythm==="sinus" && hrVal!==null && hrVal<60);
+  if(isSinusTach) rhythmType = "Синусовая тахикардия";
+  else if(isSinusBrady) rhythmType = "Синусовая брадикардия";
+  const shortRhythm = isSinusTach || isSinusBrady;
+  const isCHSZh = (S.rhythm==="af"||S.rhythm==="flutter"||S.rhythm==="vt"||(S.rhythm==="pacer"&&S.pacerMode.includes("VV")));
+  let hrPart = hrVal ? " с "+(isCHSZh?"ЧСЖ ":"ЧСС ")+hrVal+" в мин" : " (ЧСС/ЧСЖ не указана)";
+  let regularity = S.reg?", правильный":S.irreg?", нерегулярный":S.sinusArr?", синусовая аритмия":"";
+
+  const AX = {normal:"нормальная",vertical:"вертикальная",horizontal:"горизонтальная",left:"отклонена влево",right:"отклонена вправо",extleft:"резко отклонена влево",extright:"резко отклонена вправо",indet:"неопределённая"};
+  let axisPart = " ЭОС "+(AX[S.axis]||S.axis);
+  if(num(S.alpha)!==null) axisPart += " (угол α "+num(S.alpha)+"°)";
+
+  lines.push((shortRhythm?"":"Ритм ")+rhythmType+hrPart+regularity+"."+axisPart+".");
+  full.push((shortRhythm?"":"Ритм: ")+rhythmType+hrPart+regularity+".");
+  full.push("Электрическая ось сердца: "+(AX[S.axis]||S.axis)+(num(S.alpha)!==null?" (угол α "+num(S.alpha)+"°)":"")+".");
+
+  const intParts = [];
+  if(num(S.pq)) intParts.push("PQ "+num(S.pq)+" мс");
+  if(num(S.qrs)) intParts.push("QRS "+num(S.qrs)+" мс");
+
+  const qtcM = num(S.qtcManual);
+  if(qtcM!==null){
+    intParts.push("QT/QTc "+(num(S.qt)?num(S.qt)+"/":"")+fmt(qtcM)+" мс (QTc с плёнки)");
+  } else if(qtc){
+    if(S.qtcFormula==="auto"){
+      const chosen = (hrVal<60||hrVal>90)?"fridericia":"bazett";
+      const other = chosen==="bazett"?"fridericia":"bazett";
+      intParts.push("QT/QTc "+num(S.qt)+"/"+fmt(qtc[chosen])+" мс (выбрана "+(chosen==="bazett"?"Bazett":"Fridericia")+" как наиболее точная для ЧСС "+hrVal+"/мин; по "+(other==="bazett"?"Bazett":"Fridericia")+" "+fmt(qtc[other])+" мс)");
+    } else {
+      intParts.push("QT/QTc "+num(S.qt)+"/"+fmt(qtc[S.qtcFormula])+" мс (по формуле "+(S.qtcFormula==="bazett"?"Bazett":S.qtcFormula==="fridericia"?"Fridericia":"Framingham")+")");
+    }
+  } else if(num(S.qt)){
+    intParts.push("QT "+num(S.qt)+" мс");
+  }
+
+  if(S.avBlock!=="none"){
+    const avLabels = {avb1:"АВ-блокада I степени",avb2_1:"АВ-блокада II степени Мобитц I (Самойлова-Венкебаха)",avb2_2:"АВ-блокада II степени Мобитц II",avb2_fixed:"АВ-блокада II степени 2:1",avb3:"АВ-блокада III степени (полная поперечная блокада)"};
+    intParts.push(avLabels[S.avBlock]);
+  }
+
+  if(intParts.length){ const t="Интервалы: "+intParts.join(", ")+"."; lines.push(t); full.push(t); }
+
+  const pw = [];
+  const pLeadStr = leadStr(S.pLeads);
+  const amplit = S.pWave.f&&S.fAmp?(S.fAmp==="coarse"?" крупноволновые":" мелковолновые"):"";
+  for(const k in S.pWave){
+    if(!S.pWave[k]) continue;
+    if(S.rhythm==="af"      && (k==="sinus"||k==="F"||k==="mitrale"||k==="pulmonale"||k==="neg23"||k==="wandering")) continue;
+    if(S.rhythm==="flutter" && (k==="sinus"||k==="f"||k==="mitrale"||k==="pulmonale"||k==="neg23"||k==="wandering")) continue;
+    if((S.rhythm==="sinus"||S.rhythm==="atrial"||S.rhythm==="avnodal"||S.rhythm==="svt"||S.rhythm==="vt") && (k==="f"||k==="F")) continue;
+    let t;
+    if(k==="sinus") t="синусовый P";
+    else if(k==="absent") t="P отсутствует";
+    else if(k==="f") t="f-волны"+amplit;
+    else if(k==="F") t="F-волны (трепетание предсердий)";
+    else if(k==="mitrale") t="P-mitrale";
+    else if(k==="pulmonale") t="P-pulmonale";
+    else if(k==="neg23"){
+      t="отрицательный P";
+      if(pLeadStr) t+=" в отведениях "+pLeadStr;
+      else t+=" в отведениях II, III, aVF";
+      if(S.rhythm==="avnodal" && S.pPosition){
+        if(S.pPosition==="before") t+=", расположен перед комплексом QRS, интервал P-R укорочен (< 0.12 с)";
+        else if(S.pPosition==="fused") t+=", сливается с комплексом QRS (P не виден)";
+        else if(S.pPosition==="after") t+=", расположен после комплекса QRS (на сегменте ST)";
+      }
+      pw.push(t);
+      continue;
+    }
+    else if(k==="wandering") t="миграция водителя ритма (изменчивая морфология P)";
+    else continue;
+    const withLeads = (k==="f"||k==="F"||k==="mitrale"||k==="pulmonale");
+    if(withLeads&&pLeadStr) t+=" в отведениях "+pLeadStr;
+    else if(k==="neg23"&&!pLeadStr) t+=" в отведениях II, III, aVF";
+    pw.push(t);
+  }
+  if(pw.length){ const t="Предсердная активность: "+pw.join(", ")+"."; full.push(t); lines.push(t); }
+
+  const bl = [];
+  const blLabels = {pblnpnpg:"ПБЛНПГ (время внутреннего отклонения > 60 мс в V5-V6, отсутствие септального q в I, aVL, V5-V6, дискордантность ST-T)",pbpnpnpg:"ПБПНПГ (rSR' в V1-V2, широкий пологий S в I, aVL, V5-V6)",bpvlnpng:"БПВЛНПГ",bzvlnpng:"БЗВЛНПГ",bifasc:"бифасцикулярная блокада",nsivcd:"неспецифическая внутрижелудочковая блокада"};
+  for(const k in S.blocks){ if(S.blocks[k]&&blLabels[k]) bl.push(blLabels[k]); }
+  const qrsWide = num(S.qrs)!==null&&num(S.qrs)>=120;
+  let qrsText = "";
+  if(bl.length) qrsText="Нарушения проводимости: "+bl.join(", ")+".";
+  else if(qrsWide) qrsText="Комплекс QRS расширен (внутрижелудочковое замедление проведения).";
+  else if(num(S.qrs)!==null) qrsText="Комплекс QRS не уширен.";
+  if(qrsText){ lines.push(qrsText); full.push(qrsText); }
+
+  const qz = [];
+  const qzL = {inf:"нижней стенки (II, III, aVF)",ant:"передней стенки (V1–V4)",lat:"боковой стенки (V5–V6, I, aVL)",post:"задне-базальных отделов (V7–V9)"};
+  for(const k in S.pathQ){ if(S.pathQ[k]) qz.push(qzL[k]); }
+  if(qz.length){ const t="Патологический зубец Q (рубцовые изменения) в области: "+qz.join(", ")+"."; full.push(t); lines.push(t); }
+
+  const RZ_TXT = {V2:"в V2",V3:"в V3",V4:"в V4",V5:"в V5",left:"смещена влево",right:"смещена вправо"};
+  if(S.rz){ const t="Переходная зона: "+RZ_TXT[S.rz]+"."; full.push(t); lines.push(t); }
+
+  const v1n=num(S.vnoV1), v6n=num(S.vnoV6);
+  if(v1n!==null||v6n!==null){ const seg=[]; if(v1n!==null) seg.push("V1 = "+v1n+" мс"); if(v6n!==null) seg.push("V6 = "+v6n+" мс"); const t="Время внутреннего отклонения: "+seg.join(", ")+"."; full.push(t); lines.push(t); }
+
+  const stMaxTxt = v => { const n=num(v); return v?(n!==null&&String(v).trim()==String(n)?n+" мм":v.trim()):""; };
+
+  if(S.stElOn){ const ld=zoneStr(S.stElLeads); const t="Элевация сегмента ST ("+(S.stElType==="convex"?"выпуклая кверху":S.stElType==="horiz"?"горизонтальная":"косовосходящая")+")"+(ld?" в отведениях "+ld:"")+(S.stElMax?" максимально до "+stMaxTxt(S.stElMax):"")+(S.recip?" с реципрокной депрессией":"")+"."; lines.push(t); full.push(t); }
+
+  if(S.stDepOn){ const ld=zoneStr(S.stDepLeads); const t="Депрессия сегмента ST ("+(S.stDepType==="horiz"?"горизонтальная":S.stDepType==="desc"?"косонисходящая":"косовосходящая")+")"+(ld?" в отведениях "+ld:"")+(S.stDepMax?" максимально до "+stMaxTxt(S.stDepMax):"")+"."; lines.push(t); full.push(t); }
+
+  if(S.stIso&&!S.stElOn&&!S.stDepOn){ const t="Сегмент ST на изолинии во всех отведениях."; lines.push(t); full.push(t); }
+
+  const tw=[];
+  const twL={pos:"положительный",negcor:"отрицательный симметричный (коронарный)",negasym:"отрицательный асимметричный (дистрофические изменения)",smooth:"сглажен",iso:"изоэлектричен",tall:"высокий остроконечный",disc:"дискордантен QRS"};
+  for(const k in S.tWave){ if(S.tWave[k]&&twL[k]) tw.push(twL[k]); }
+  if(tw.length){ const zt=tLocNominative(S.tLoc); const t="Зубец T: "+tw.join(", ")+(zt?" "+zt+".":"."); lines.push(t); full.push(t); }
+
+  const ex=[];
+  const cornN=num(S.cornVal), slN=num(S.slVal);
+  const exL={
+    lvh_corn: cornN!==null?"признаки ГЛЖ по Корнелльскому вольтажу (R aVL + S V3 = "+cornN+" мм, с асимметричной косонисходящей депрессией ST)":"вольтажные признаки ГЛЖ по Корнелльскому индексу",
+    lvh_sl: slN!==null?"ГЛЖ по признаку Соколова-Лайона (S V1 + R V5/V6 = "+slN+" мм)":"вольтажные признаки ГЛЖ по Соколову-Лайону",
+    erp:"синдром ранней реполяризации желудочков (элевация ST с вогнутостью кверху, зазубрина на колене R)",
+    wpw:"феномен WPW (укорочение PQ, дельта-волна)",
+    glyc:"гликозидный эффект (корытообразное смещение сегмента ST вниз от изолинии)",
+    ekg_pacer:(()=>{ let t="функционирование ЭКС в режиме "+S.pacerMode; if(S.pacerSpk) t+=", регистрируются спайки стимулятора"; if(S.pacerCap) t+=", "+S.pacerCap; if(S.pacerNote.trim()) t+=", "+S.pacerNote.trim(); return t; })(),
+    pericard:"диффузные изменения (вероятно, перикардит: конкордантная элевация ST, депрессия PR)",
+    hyperK:"признаки гиперкалиемии (высокий остроконечный зубец T, расширение QRS)"
+  };
+  for(const k in S.extra){ if(S.extra[k]&&exL[k]) ex.push(exL[k]); }
+  if(ex.length){ const t="Дополнительные паттерны: "+ex.join("; ")+"."; lines.push(t); full.push(t); }
+
+  let summary = summarize();
+  lines.push(""); lines.push(summary);
+  full.push(""); full.push(summary);
+
+  if(S.dyn){
+    const base={pos:"Положительная динамика",neg:"Отрицательная динамика",new:"Впервые выявленные изменения"}[S.dyn];
+    let d;
+    if(S.dyn==="new") d=S.dynDate?base+" (в сравнении с ЭКГ от "+fmtDate(S.dynDate)+").":base+".";
+    else d=base+(S.dynDate?" в сравнении с архивной ЭКГ от "+fmtDate(S.dynDate)+".":".");
+    lines.push(d); full.push(d);
+  }
+
+  $("out").textContent = (S.mode==="full"?full:lines).join("\n");
+  runValidations();
+  saveState();
+  $("pPosition").value = S.pPosition;
+}
+
+function summarize(){
+  const anyData = num(S.hr)!==null||num(S.pq)!==null||num(S.qrs)!==null||num(S.qt)!==null||num(S.qtcManual)!==null||num(S.alpha)!==null||S.dyn!==""||S.rz!==""||num(S.vnoV1)!==null||num(S.vnoV6)!==null||["stIso","stElOn","stDepOn"].some(k=>S[k])||S.reg||S.irreg||S.sinusArr||Object.values(S.pWave).some(Boolean)||Object.values(S.blocks).some(Boolean)||Object.values(S.pathQ).some(Boolean)||Object.values(S.tWave).some(Boolean)||Object.values(S.tLoc).some(Boolean)||Object.values(S.extra).some(Boolean)||S.avBlock!=="none";
+  if(!anyData) return "Заключение: данные ЭКГ не внесены — заполните блоки 1–6.";
+  const af=(S.rhythm==="af"||S.rhythm==="flutter");
+  const tPath=["negcor","negasym","smooth","iso","tall","disc"].some(k=>S.tWave[k]);
+  const ischemia=S.stElOn||S.stDepOn||tPath;
+  const infarct=(S.pathQ.inf||S.pathQ.ant||S.pathQ.lat||S.pathQ.post);
+  const blocks=Object.values(S.blocks).some(Boolean)||(num(S.qrs)!==null&&num(S.qrs)>=120)||(S.avBlock!=="none");
+  const norm=!af&&!ischemia&&!infarct&&!blocks&&!Object.values(S.extra).some(Boolean);
+
+  const RM={sinus:"синусовый",atrial:"предсердный",avnodal:"АВ-узловой",af:"фибрилляция предсердий",flutter:"трепетание предсердий",svt:"наджелудочковая тахикардия",vt:"желудочковая тахикардия",pacer:"ЭКС"};
+  let sr=RM[S.rhythm]||S.rhythm;
+  if(S.rhythm==="flutter") sr+=" "+S.flutterRatio;
+  const hrVal=num(S.hr);
+  const isSinusTach = (S.rhythm==="sinus" && hrVal!==null && hrVal>100);
+  const isSinusBrady = (S.rhythm==="sinus" && hrVal!==null && hrVal<60);
+  if(isSinusTach) sr = "Синусовая тахикардия";
+  else if(isSinusBrady) sr = "Синусовая брадикардия";
+  const shortRhythm = isSinusTach || isSinusBrady;
+  const isCHSZh=(S.rhythm==="af"||S.rhythm==="flutter"||S.rhythm==="vt"||(S.rhythm==="pacer"&&S.pacerMode.includes("VV")));
+  const hrText=hrVal?" с "+(isCHSZh?"ЧСЖ ":"ЧСС ")+hrVal+" в мин.":" (ЧСС не указана).";
+  const AX={normal:"нормальная",vertical:"вертикальная",horizontal:"горизонтальная",left:"отклонена влево",right:"отклонена вправо",extleft:"резко отклонена влево",extright:"резко отклонена вправо",indet:"неопределённая"};
+  const prefix="Заключение: "+(shortRhythm?"":"Ритм ")+sr+hrText+" ЭОС "+(AX[S.axis]||S.axis)+".";
+
+  if(norm){
+    const morph=S.stIso||S.tWave.pos;
+    return prefix+(morph?" Патологических изменений не зарегистрировано.":" Данных по сегменту ST, зубцам P и T не внесено — оценка не заявлена.");
+  }
+
+  const findings=[];
+  if(af) findings.push("нарушение ритма");
+  if(S.avBlock!=="none") findings.push("атриовентрикулярная блокада ("+S.avBlock.replace("avb1","I ст.").replace("avb2_1","II ст. Мобитц I").replace("avb2_2","II ст. Мобитц II").replace("avb2_fixed","II ст. 2:1").replace("avb3","III ст.")+")");
+  if(infarct) findings.push("рубцовые изменения миокарда (патологический зубец Q)");
+  if(S.stElOn||S.stDepOn||S.tWave.negcor||S.tWave.negasym) findings.push("ишемические изменения сегмента ST-T");
+  else if(tPath) findings.push("неспецифические нарушения процессов реполяризации");
+  if(Object.values(S.blocks).some(Boolean)||(num(S.qrs)>=120)) findings.push("нарушения внутрижелудочковой проводимости");
+  if(Object.values(S.extra).some(Boolean)) findings.push("дополнительные находки (см. описание)");
+
+  return prefix+" "+findings.join(", ")+".";
+}
+
+function leadStr(obj){ const m={II:"II",III:"III",aVF:"aVF",V1:"V1",V4:"V4",V6:"V6"}; const keys=Object.keys(obj).filter(k=>obj[k]); return keys.length?keys.map(k=>m[k]||k).join(", "):""; }
+function zoneStr(obj){ const m={ii_iii_avf:"II, III, aVF",v1_v4:"V1–V4",v5_v6:"V5–V6, I, aVL"}; const keys=Object.keys(obj).filter(k=>obj[k]); return keys.length?keys.map(k=>m[k]||k).join("; "):""; }
+function tLocNominative(obj){ const m={inf:"нижней стенки",ant:"передней стенки",lat:"боковой стенки",post:"задне-базальных отделов"}; const keys=Object.keys(obj).filter(k=>obj[k]&&k!=="glob"); const parts=keys.map(k=>m[k]||k); if(obj.glob){ if(parts.length) return "диффузно по всем стенкам ЛЖ, преимущественно "+parts.join(", "); return "диффузно по всем стенкам ЛЖ"; } return parts.length?"в области "+parts.join(", "):""; }
+function num(v){ const n=parseFloat(v); return isNaN(n)?null:n; }
+
+function refreshHrLabel(){ const isCHSZh=(S.rhythm==="af"||S.rhythm==="flutter"||S.rhythm==="vt"||(S.rhythm==="pacer"&&S.pacerMode.includes("VV"))); $("hrLabel").textContent=isCHSZh?"ЧСЖ, в мин":"ЧСС, в мин"; }
+
+function markField(id,cls){ const el=$(id); el.classList.remove("fld-warn","fld-bad"); if(cls) el.classList.add(cls==="bad"?"fld-bad":"fld-warn"); }
+
+function runValidations(){
+  ["b1Hint","pHint","qrsHint","pqHint","qtHint","stHint","b6Hint"].forEach(id=>{ const el=$(id); if(el) el._buf=[]; });
+  ["pq","qrs","qt","qtcManual","stElMax","stDepMax"].forEach(id=>markField(id,null));
+  const pqVal=num(S.pq), qrsVal=num(S.qrs);
+  if(qrsVal>=120){ markField("qrs","warn"); if(!Object.values(S.blocks).some(Boolean)) addHint("qrsHint","warn","⚠ Уширение комплекса QRS (>=120 мс). Выберите вид нарушения проводимости в Блоке 4."); }
+  if((S.blocks.pblnpnpg||S.blocks.pbpnpnpg)&&qrsVal!==null&&qrsVal<120) addHint("qrsHint","warn","⚠ Для полной блокады ножки пучка Гиса характерна ширина QRS >= 120 мс.");
+  if(pqVal>200){ markField("pq","warn"); if(S.avBlock==="none") addHint("pqHint","warn","⚠ Удлинение PQ ("+pqVal+" мс) соответствует АВ-блокаде I степени."); }
+  else if(pqVal!==null&&pqVal<120){ markField("pq","warn"); if(S.extra.wpw) addHint("pqHint","ok","✓ Интервал PQ укорочен в соответствии с синдромом WPW."); else addHint("pqHint","warn","⚠ Укорочение PQ (<120 мс). Проверьте наличие дельта-волны и WPW."); }
+  if(S.avBlock==="avb1"&&pqVal!==null&&pqVal<=200) addHint("pqHint","warn","⚠ Выбрана АВ-блокада I степени, но интервал PQ в норме (<= 200 мс).");
+  const qtcM=num(S.qtcManual); const qtc=qtcAll(num(S.qt),num(S.hr)); const threshold=S.sex==="f"?460:450; let checkV=null,src="";
+  if(qtcM!==null){ checkV=Math.round(qtcM); src=" (с плёнки)"; markField("qtcManual",checkV>threshold?"bad":null); }
+  else if(qtc){ const cf=S.qtcFormula==="auto"?(num(S.hr)<60||num(S.hr)>90?"fridericia":"bazett"):S.qtcFormula; checkV=Math.round(qtc[cf]); src=" (по "+(cf==="bazett"?"Bazett":"Fridericia")+")"; if(checkV>threshold) markField("qt","bad"); }
+  if(checkV!==null){ if(checkV>500) addHint("qtHint","bad","🔴 Критическое уширение интервала QTc ("+checkV+src+" мс) — высокий риск развития полиморфной ЖТ типа «пируэт»!"); else if(checkV>threshold) addHint("qtHint","bad","🔴 Зарегистрировано удлинение интервала QTc ("+checkV+src+" мс, норма <= "+threshold+")."); }
+  if((S.rhythm==="af"||S.rhythm==="flutter")&&S.pWave.sinus) addHint("pHint","bad","🔴 При фибрилляции/трепетании предсердий синусовый зубец P невозможен.");
+  if(S.rhythm==="sinus"&&S.pWave.absent) addHint("pHint","bad","🔴 При синусовом ритме зубец P не может отсутствовать — снимите один из флагов.");
+  if(S.pWave.mitrale&&S.pWave.pulmonale) addHint("pHint","warn","⚠ Одновременно отмечены P-mitrale и P-pulmonale — уточните, какая перегрузка преобладает.");
+  if(S.rhythm==="sinus"){
+    const hrNum = num(S.hr);
+    if(hrNum!==null && hrNum>100) addHint("b1Hint","warn","⚠ Синусовая тахикардия ("+hrNum+" в мин). Уточните клинический контекст.");
+    if(hrNum!==null && hrNum>=50 && hrNum<60) addHint("b1Hint","warn","⚠ Умеренная синусовая брадикардия ("+hrNum+" в мин).");
+    if(hrNum!==null && hrNum>=45 && hrNum<50) addHint("b1Hint","warn","⚠ Выраженная синусовая брадикардия ("+hrNum+" в мин). Проверьте симптоматику и наличие пауз.");
+    if(hrNum!==null && hrNum<45) addHint("b1Hint","warn","⚠ Резко выраженная синусовая брадикардия ("+hrNum+" в мин). Проверьте симптоматику и наличие пауз.");
+  }
+  if(S.stElOn&&!S.recip) addHint("stHint","warn","⚠ Локальная элевация ST: исключите ОИМ, найдите реципрокные изменения.");
+  if(S.stElOn&&!Object.values(S.stElLeads).some(Boolean)) addHint("stHint","warn","⚠ Элевация ST: локализация не указана.");
+  if(S.stDepOn&&!Object.values(S.stDepLeads).some(Boolean)) addHint("stHint","warn","⚠ Депрессия ST: локализация не указана.");
+  if(S.tWave.pos&&["negcor","negasym","smooth","iso","tall","disc"].some(k=>S.tWave[k])) addHint("stHint","warn","⚠ Отмечен и «T положительный», и патологические варианты T.");
+  if(S.stElOn&&S.stDepOn) addHint("stHint","warn","⚠ Одновременно выбраны элевация и депрессия ST.");
+  if(S.stIso&&(S.stElOn||S.stDepOn)) addHint("stHint","warn","⚠ ST на изолинии выбран одновременно со смещением ST.");
+  if(S.extra.ekg_pacer&&S.rhythm!=="pacer") addHint("b6Hint","warn","⚠ Описана работа стимулятора, но ритм в блоке 1 не ЭКС.");
+  if(S.extra.erp&&S.stElOn) addHint("b6Hint","warn","⚠ Ранняя реполяризация сама даёт элевацию ST — проверьте дубль с блоком 5.");
+  if(S.extra.pericard&&S.stElOn) addHint("b6Hint","warn","⚠ При перикардите элевация диффузная; отмечена локальная — исключите ИМ.");
+  flushHints();
+}
+
+function setHint(id,cls,msg){ const el=$(id); if(!msg){ el.className="hint"; el.textContent=""; return; } el.className="hint "+cls; el.textContent=msg; }
+function addHint(id,prio,msg){ const el=$(id); if(!el) return; el._buf=el._buf||[]; el._buf.push({prio,msg}); }
+function flushHints(){ for(const id of ["b1Hint","pHint","qrsHint","pqHint","qtHint","stHint","b6Hint"]){ const el=$(id); if(!el) continue; const buf=el._buf||[]; el._buf=[]; if(!buf.length){ setHint(id,"",null); el.style.whiteSpace=""; continue; } const worst=buf.some(b=>b.prio==="bad")?"bad":buf.some(b=>b.prio==="warn")?"warn":"ok"; el.style.whiteSpace=buf.length>1?"pre-line":""; setHint(id,worst,buf.map(b=>b.msg).join("\n")); } }
+
+function normalizeRhythmDefaults(){
+  if(S.rhythm==="sinus"
+     && !S.pWave.sinus && !S.pWave.absent
+     && !S.pWave.f     && !S.pWave.F){
+    pWaveObj.sinus = true;
+  }
+  if(S.rhythm==="sinus" && !S.reg && !S.irreg && !S.sinusArr){
+    S.reg = true;
+  }
+}
+
+function bind(){
+  $("rhythm").value=S.rhythm;
+  $("rhythm").onchange=e=>{
+    S.rhythm=e.target.value;
+    $("pacerModeWrap").style.display=S.rhythm==="pacer"?"flex":"none";
+    $("flutterRatioWrap").style.display=S.rhythm==="flutter"?"flex":"none";
+    if(S.rhythm==="sinus"){ pWaveObj.sinus=true; pWaveObj.absent=false; pWaveObj.f=false; pWaveObj.F=false; pWaveObj.neg23=false; S.reg=true; S.irreg=false; S.sinusArr=false; S.pPosition=""; }
+    else if(S.rhythm==="af"){ pWaveObj.sinus=false; pWaveObj.absent=true; pWaveObj.f=true; pWaveObj.F=false; S.reg=false; S.irreg=true; S.sinusArr=false; S.pPosition=""; pWaveObj.mitrale=false; pWaveObj.pulmonale=false; pWaveObj.neg23=false; pWaveObj.wandering=false; }
+    else if(S.rhythm==="flutter"){ pWaveObj.sinus=false; pWaveObj.absent=true; pWaveObj.f=false; pWaveObj.F=true; S.reg=true; S.irreg=false; S.sinusArr=false; S.pPosition=""; pWaveObj.mitrale=false; pWaveObj.pulmonale=false; pWaveObj.neg23=false; pWaveObj.wandering=false; }
+    else if(S.rhythm==="avnodal"){ pWaveObj.sinus=false; pWaveObj.absent=false; pWaveObj.f=false; pWaveObj.F=false; pWaveObj.neg23=true; S.reg=true; S.irreg=false; S.sinusArr=false; S.pPosition=""; }
+    else if(S.rhythm==="svt"||S.rhythm==="vt"){ pWaveObj.sinus=false; pWaveObj.absent=true; pWaveObj.f=false; pWaveObj.F=false; pWaveObj.neg23=false; S.reg=true; S.irreg=false; S.sinusArr=false; S.pPosition=""; }
+    else if(S.rhythm==="atrial"){ pWaveObj.sinus=false; pWaveObj.absent=false; pWaveObj.f=false; pWaveObj.F=false; pWaveObj.neg23=false; S.reg=true; S.irreg=false; S.sinusArr=false; S.pPosition=""; }
+    else if(S.rhythm==="pacer"){ pWaveObj.sinus=false; S.reg=true; S.irreg=false; S.sinusArr=false; S.pPosition=""; pWaveObj.mitrale=false; pWaveObj.pulmonale=false; pWaveObj.neg23=false; pWaveObj.wandering=false; }
+    syncUI(); refreshHrLabel(); build();
+  };
+  $("pacerMode").value=S.pacerMode; $("pacerMode").onchange=e=>{ S.pacerMode=e.target.value; refreshHrLabel(); build(); };
+  $("pPosition").value=S.pPosition;
+  $("pPosition").onchange=e=>{ S.pPosition=e.target.value; build(); };
+  $("flutterRatio").value=S.flutterRatio; $("flutterRatio").onchange=e=>{ S.flutterRatio=e.target.value; build(); };
+  $("hr").value=S.hr; $("hr").oninput=e=>{ S.hr=e.target.value; refreshHrLabel(); build(); };
+  bindChips("regularity",regObj);
+  $("axis").value=S.axis; $("axis").onchange=e=>{ S.axis=e.target.value; build(); };
+  $("sex").value=S.sex;
+  // Пол пациента — toggle-кнопки
+  document.querySelectorAll("#sexToggle button").forEach(b => {
+    b.onclick = () => {
+      document.querySelectorAll("#sexToggle button").forEach(x => x.classList.remove("on"));
+      b.classList.add("on");
+      S.sex = b.dataset.s;
+      $("sex").value = S.sex;
+      build();
+    };
+  });
+  $("avBlock").value=S.avBlock; $("avBlock").onchange=e=>{ S.avBlock=e.target.value; build(); };
+  ["alpha","pq","qrs","qt","qtcManual"].forEach(id=>{ $(id).value=S[id]; $(id).oninput=e=>{ S[id]=e.target.value; build(); }; });
+  $("qtcFormula").value=S.qtcFormula; $("qtcFormula").onchange=e=>{ S.qtcFormula=e.target.value; build(); };
+  bindChips("pWave",pWaveObj);
+  $("fAmp").value=S.fAmp; $("fAmp").onchange=e=>{ S.fAmp=e.target.value; build(); };
+  bindChips("pLeads",S.pLeads);
+  bindChips("blocks",S.blocks);
+  bindChips("pathQ",S.pathQ);
+  $("rz").value=S.rz; $("rz").onchange=e=>{ S.rz=e.target.value; build(); };
+  ["vnoV1","vnoV6"].forEach(id=>{ $(id).value=S[id]; $(id).oninput=e=>{ S[id]=e.target.value; build(); }; });
+  bindChips("stElWrap",stElOnProxy);
+  $("stElWrap").addEventListener("change",()=>{ $("stElBody").style.display=S.stElOn?"block":"none"; if(S.stElOn){ S.stIso=false; syncChips("stIsoWrap",stIsoProxy); } build(); });
+  bindChips("stElLeads",S.stElLeads);
+  $("stElType").value=S.stElType; $("stElType").onchange=e=>{ S.stElType=e.target.value; build(); };
+  $("stElMax").value=S.stElMax; $("stElMax").oninput=e=>{ S.stElMax=e.target.value; build(); };
+  bindChips("recip",recipObj);
+  bindChips("stDepWrap",stDepOnProxy);
+  $("stDepWrap").addEventListener("change",()=>{ $("stDepBody").style.display=S.stDepOn?"block":"none"; if(S.stDepOn){ S.stIso=false; syncChips("stIsoWrap",stIsoProxy); } build(); });
+  bindChips("stDepLeads",S.stDepLeads);
+  $("stDepType").value=S.stDepType; $("stDepType").onchange=e=>{ S.stDepType=e.target.value; build(); };
+  $("stDepMax").value=S.stDepMax; $("stDepMax").oninput=e=>{ S.stDepMax=e.target.value; build(); };
+  bindChips("stIsoWrap",stIsoProxy);
+  $("stIsoWrap").addEventListener("change",()=>{ if(S.stIso){ S.stElOn=false; S.stDepOn=false; $("stElBody").style.display="none"; $("stDepBody").style.display="none"; syncChips("stElWrap",stElOnProxy); syncChips("stDepWrap",stDepOnProxy); } build(); });
+  bindChips("tWave",S.tWave);
+  bindChips("tLoc",S.tLoc);
+  bindChips("extra",S.extra);
+  $("cornVal").value=S.cornVal; $("cornVal").oninput=e=>{ S.cornVal=e.target.value; build(); };
+  $("slVal").value=S.slVal; $("slVal").oninput=e=>{ S.slVal=e.target.value; build(); };
+  $("extra").addEventListener("change",()=>{ $("lvhCornWrap").style.display=S.extra.lvh_corn?"flex":"none"; $("lvhSlWrap").style.display=S.extra.lvh_sl?"flex":"none"; $("pacerWrap").style.display=S.extra.ekg_pacer?"block":"none"; build(); });
+  $("pacerSpk").checked=S.pacerSpk; $("pacerSpkLbl").classList.toggle("on",S.pacerSpk);
+  $("pacerSpk").onchange=e=>{ S.pacerSpk=e.target.checked; $("pacerSpkLbl").classList.toggle("on",S.pacerSpk); build(); };
+  $("pacerCap").value=S.pacerCap; $("pacerCap").onchange=e=>{ S.pacerCap=e.target.value; build(); };
+  $("pacerNote").value=S.pacerNote; $("pacerNote").oninput=e=>{ S.pacerNote=e.target.value; build(); };
+  document.querySelectorAll("#modeToggle button").forEach(b=>{ b.onclick=()=>{ document.querySelectorAll("#modeToggle button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); S.mode=b.dataset.m; build(); }; });
+  $("dyn").value=S.dyn; $("dyn").onchange=e=>{ S.dyn=e.target.value; build(); };
+  $("dynDate").value=S.dynDate; $("dynDate").onchange=e=>{ S.dynDate=e.target.value; build(); };
+  $("pWave").addEventListener("change",()=>{ refreshPVisibility(); build(); });
+  renderPresets();
+  $("savePreset").onclick=saveCustomPreset;
+  $("copyBtn").onclick=()=>{ copyText($("out").textContent); };
+  $("clearBtn").onclick=()=>{ if(confirm("Сбросить все поля?")){ resetState(); build(); } };
+  normalizeRhythmDefaults();
+  syncUI();
+}
+
+function bindChips(cid,obj){ document.querySelectorAll("#"+cid+" .chk").forEach(lbl=>{ const key=lbl.querySelector("input").dataset.k; lbl.addEventListener("change",()=>{ obj[key]=lbl.querySelector("input").checked; syncChips(cid,obj); build(); }); }); }
+
+function updatePWaveVisibility(){
+  let hideKeys = [];
+  if(S.rhythm==="af")
+    hideKeys = ["sinus","F","mitrale","pulmonale","neg23","wandering"];
+  else if(S.rhythm==="flutter")
+    hideKeys = ["sinus","f","mitrale","pulmonale","neg23","wandering"];
+  else if(S.rhythm==="sinus" || S.rhythm==="atrial" || S.rhythm==="avnodal"
+       || S.rhythm==="svt" || S.rhythm==="vt")
+    hideKeys = ["f","F"];
+  ["sinus","absent","f","F","mitrale","pulmonale","neg23","wandering"].forEach(k=>{
+    const input = document.querySelector('#pWave input[data-k="'+k+'"]');
+    if(!input) return;
+    input.closest(".chk").classList.toggle("hidden", hideKeys.includes(k));
+  });
+}
+
+function syncUI(){
+  syncChips("regularity",regObj);
+  syncChips("pWave",S.pWave); syncChips("pLeads",S.pLeads);
+  syncChips("blocks",S.blocks); syncChips("pathQ",S.pathQ);
+  syncChips("stElWrap",stElOnProxy); syncChips("stElLeads",S.stElLeads); syncChips("recip",recipObj);
+  syncChips("stDepWrap",stDepOnProxy); syncChips("stDepLeads",S.stDepLeads);
+  syncChips("stIsoWrap",stIsoProxy);
+  syncChips("tWave",S.tWave); syncChips("tLoc",S.tLoc);
+  syncChips("extra",S.extra);
+  $("rhythm").value=S.rhythm; $("pacerMode").value=S.pacerMode; $("flutterRatio").value=S.flutterRatio; $("hr").value=S.hr; $("axis").value=S.axis; $("sex").value=S.sex; $("avBlock").value=S.avBlock;
+  // Синхронизация toggle пола
+  document.querySelectorAll("#sexToggle button").forEach(b => {
+    b.classList.toggle("on", b.dataset.s === S.sex);
+  });
+  ["alpha","pq","qrs","qt","qtcManual","fAmp","rz","vnoV1","vnoV6","stElType","stElMax","stDepType","stDepMax","cornVal","slVal"].forEach(id=>{ $(id).value=S[id]; });
+  $("qtcFormula").value=S.qtcFormula; $("dyn").value=S.dyn; $("dynDate").value=S.dynDate;
+  document.querySelectorAll("#modeToggle button").forEach(b=>b.classList.toggle("on",b.dataset.m===S.mode));
+  $("pacerModeWrap").style.display=S.rhythm==="pacer"?"flex":"none";
+  $("flutterRatioWrap").style.display=S.rhythm==="flutter"?"flex":"none";
+  $("stElBody").style.display=S.stElOn?"block":"none";
+  $("stDepBody").style.display=S.stDepOn?"block":"none";
+  refreshPVisibility();
+  $("pPositionWrap").style.display = S.rhythm==="avnodal" ? "block" : "none";
+  $("pPosition").value = S.pPosition;
+  $("lvhCornWrap").style.display=S.extra.lvh_corn?"flex":"none";
+  $("lvhSlWrap").style.display=S.extra.lvh_sl?"flex":"none";
+  $("pacerWrap").style.display=S.extra.ekg_pacer?"block":"none";
+  $("pacerSpk").checked=S.pacerSpk; $("pacerSpkLbl").classList.toggle("on",S.pacerSpk);
+  $("pacerCap").value=S.pacerCap; $("pacerNote").value=S.pacerNote;
+  refreshHrLabel();
+  updatePWaveVisibility();
+}
+
+function syncChips(cid,obj){ document.querySelectorAll("#"+cid+" .chk").forEach(lbl=>{ const key=lbl.querySelector("input").dataset.k; const v=!!obj[key]; lbl.querySelector("input").checked=v; lbl.classList.toggle("on",v); }); }
+
+function copyText(t){ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(()=>toast("Скопировано")).catch(()=>fallbackCopy(t)); else fallbackCopy(t); }
+function fallbackCopy(t){ const ta=document.createElement("textarea"); ta.value=t; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.select(); try{ document.execCommand("copy"); toast("Скопировано"); }catch(e){ toast("Ошибка"); } document.body.removeChild(ta); }
+
+function defaultState(){ return { rhythm:"sinus",pacerMode:"AAI",hr:"",reg:false,irreg:false,sinusArr:false,pPosition:"",sex:"m",flutterRatio:"2:1",axis:"normal",alpha:"",pq:"",qrs:"",qt:"",qtcManual:"",qtcFormula:"auto",avBlock:"none",pWave:{sinus:false,absent:false,f:false,F:false,mitrale:false,pulmonale:false,neg23:false,wandering:false},fAmp:"",pLeads:{},blocks:{pblnpnpg:false,pbpnpnpg:false,bpvlnpng:false,bzvlnpng:false,bifasc:false,nsivcd:false},pathQ:{inf:false,ant:false,lat:false,post:false},rz:"",vnoV1:"",vnoV6:"",stElOn:false,stElLeads:{},stElType:"convex",stElMax:"",recip:false,stDepOn:false,stDepLeads:{},stDepType:"horiz",stDepMax:"",stIso:false,tWave:{pos:false,negcor:false,negasym:false,smooth:false,iso:false,tall:false,disc:false},tLoc:{inf:false,ant:false,lat:false,glob:false},extra:{lvh_corn:false,lvh_sl:false,erp:false,wpw:false,glyc:false,ekg_pacer:false,pericard:false,hyperK:false},cornVal:"",slVal:"",mode:"brief",dyn:"",dynDate:"",pacerSpk:false,pacerCap:"",pacerNote:"" }; }
+
+function mergeInto(target, src){
+  for (const k in src){
+    const v = src[k];
+    if (v && typeof v === "object" && !Array.isArray(v)
+        && target[k] && typeof target[k] === "object"){
+      for (const kk in target[k]) delete target[k][kk];
+      Object.assign(target[k], v);
+    } else {
+      target[k] = v;
+    }
+  }
+}
+
+function resetState(){
+  mergeInto(S,defaultState());
+  normalizeRhythmDefaults();
+  syncUI();
+  build();
+}
+
+let customPresets={};
+try{ customPresets=JSON.parse(localStorage.getItem("ecgPresets")||"{}"); }catch(e){}
+
+function renderPresets(){ const wrap=$("presets"); wrap.innerHTML=""; const all=Object.assign({},PRESETS,customPresets); for(const name in all){ const b=document.createElement("button"); b.className="preset"; b.textContent=name; b.onclick=()=>{ applyPreset(all[name]); toast("Пресет: "+name); }; wrap.appendChild(b); } }
+
+function applyPreset(p){ if(!p||typeof p!=="object") return; const d=defaultState(); mergeInto(S,d); for(const k in d){ if(!(k in p)) continue; if(typeof d[k]==="object"||d[k]===null) continue; S[k]=(typeof p[k]==="number"&&typeof d[k]==="string")?String(p[k]):p[k]; } for(const g of ["pWave","blocks","pathQ","tWave","tLoc","extra"]){ if(p[g]) Object.assign(S[g],d[g],p[g]); } for(const g of ["pWave","blocks","pathQ"]){ for(const k in S[g]){ if(k in p&&k!==g) S[g][k]=p[k]; } } for(const k in S.tWave){ if("t_"+k in p) S.tWave[k]=p["t_"+k]; } for(const k of ["stElLeads","stDepLeads","pLeads"]){ if(p[k]){ for(const kk in S[k]) delete S[k][kk]; Object.assign(S[k],p[k]); } } syncUI(); build(); }
+
+function saveCustomPreset(){ const name=prompt("Название пресета:"); if(!name) return; const data=JSON.parse(JSON.stringify(S)); customPresets[name]=data; localStorage.setItem("ecgPresets",JSON.stringify(customPresets)); renderPresets(); toast("Пресет сохранён"); }
+
+loadState();
+bind();
+build();
+</script>
+</body>
+</html>

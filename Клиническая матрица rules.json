@@ -1,0 +1,2019 @@
+{
+  "schemaVersion": "1.0",
+  "status": "draft_for_physician_review",
+  "purpose": "Нормализованная модель правил обследований для объединённого планировщика.",
+  "notMedicalProtocol": true,
+  "sourcePriority": [
+    "current_clinical_guideline",
+    "newer_current_official_document",
+    "current_medical_care_standard",
+    "official_algorithm",
+    "reference_material"
+  ],
+  "clinicalStages": [
+    {
+      "id": "primary_visit",
+      "label": "Первичный приём"
+    },
+    {
+      "id": "follow_up",
+      "label": "Повторный приём (контроль, титрация)"
+    },
+    {
+      "id": "annual_control",
+      "label": "Ежегодный контроль"
+    },
+    {
+      "id": "worsening",
+      "label": "Ухудшение состояния"
+    },
+    {
+      "id": "post_event",
+      "label": "После госпитализации или вмешательства"
+    }
+  ],
+  "diagnoses": [
+    {
+      "id": "hypertension",
+      "label": "Артериальная гипертензия",
+      "code": "I10-I15",
+      "sourceIds": [
+        "kr_ag_2024",
+        "standard_ag_1193n"
+      ]
+    },
+    {
+      "id": "stable_ihd",
+      "label": "Стабильная ишемическая болезнь сердца",
+      "code": "I20.8, I25",
+      "sourceIds": [
+        "kr_stable_ihd_2024",
+        "standard_stable_ihd_410n"
+      ]
+    },
+    {
+      "id": "heart_failure",
+      "label": "Хроническая сердечная недостаточность",
+      "code": "I50",
+      "sourceIds": [
+        "kr_hf_2024",
+        "standard_hf_612n"
+      ]
+    },
+    {
+      "id": "atrial_fibrillation",
+      "label": "Фибрилляция/трепетание предсердий",
+      "code": "I48",
+      "sourceIds": [
+        "kr_af_2025",
+        "standard_af_435n"
+      ]
+    },
+    {
+      "id": "type2_diabetes",
+      "label": "Сахарный диабет 2 типа",
+      "code": "E11",
+      "sourceIds": [
+        "kr_dm2_2022",
+        "algorithms_dm_2025",
+        "standard_dm2_1054n"
+      ]
+    },
+    {
+      "id": "ckd",
+      "label": "Хроническая болезнь почек",
+      "code": "N18",
+      "sourceIds": [
+        "kr_ckd_2024"
+      ]
+    }
+  ],
+  "stagesAndConditions": [
+    {
+      "id": "ckd_stage",
+      "type": "single_select",
+      "values": [
+        "C1",
+        "C2",
+        "C3a",
+        "C3b",
+        "C4",
+        "C5",
+        "C5D",
+        "unknown"
+      ]
+    },
+    {
+      "id": "hf_status",
+      "type": "single_select",
+      "values": [
+        "suspected",
+        "established",
+        "unknown"
+      ]
+    },
+    {
+      "id": "diabetes_status",
+      "type": "single_select",
+      "values": [
+        "suspected",
+        "newly_established",
+        "established"
+      ]
+    },
+    {
+      "id": "antithrombotic_status",
+      "type": "single_select",
+      "values": [
+        "doac",
+        "warfarin",
+        "not_prescribed_or_decision_pending"
+      ]
+    },
+    {
+      "id": "urine_inflammation",
+      "type": "boolean_or_unknown",
+      "values": [
+        true,
+        false,
+        "unknown"
+      ]
+    },
+    {
+      "id": "renal_function_below_60",
+      "type": "boolean_or_unknown",
+      "values": [
+        true,
+        false,
+        "unknown"
+      ]
+    },
+    {
+      "id": "albuminuria_at_least_3_mmol",
+      "type": "boolean_or_unknown",
+      "values": [
+        true,
+        false,
+        "unknown"
+      ]
+    },
+    {
+      "id": "amiodarone",
+      "type": "boolean_or_unknown",
+      "values": [
+        true,
+        false,
+        "unknown"
+      ]
+    },
+    {
+      "id": "metabolic_decompensation",
+      "type": "boolean_or_unknown",
+      "values": [
+        true,
+        false,
+        "unknown"
+      ]
+    },
+    {
+      "id": "acute_coronary_syndrome_suspected",
+      "type": "boolean_or_unknown",
+      "values": [
+        true,
+        false,
+        "unknown"
+      ]
+    },
+    {
+      "id": "renovascular_hypertension_suspected",
+      "type": "boolean_or_unknown",
+      "values": [
+        true,
+        false,
+        "unknown"
+      ]
+    },
+    {
+      "id": "arrhythmia_symptoms",
+      "type": "boolean_or_unknown",
+      "values": [
+        true,
+        false,
+        "unknown"
+      ]
+    }
+  ],
+  "statusPriority": [
+    "emergency",
+    "mandatory_for_situation",
+    "mandatory_for_stage",
+    "mandatory_if_condition",
+    "indicated_if_condition",
+    "symptom_dependent",
+    "consider",
+    "clinical_review_required",
+    "do_not_auto_add"
+  ],
+  "availabilityStatuses": [
+    "available_at_clinic",
+    "availability_unconfirmed",
+    "unavailable_external_route",
+    "needs_confirmation"
+  ],
+  "examinations": [
+    {
+      "id": "lab_cbc",
+      "label": "Общий (клинический) анализ крови",
+      "category": "lab",
+      "components": [
+        "hemoglobin",
+        "erythrocytes",
+        "leukocytes",
+        "platelets"
+      ],
+      "mergeGroup": "cbc",
+      "availability": "available_at_clinic",
+      "frequency": 1
+    },
+    {
+      "id": "lab_creatinine_egfr",
+      "label": "Креатинин + расчёт СКФ CKD-EPI",
+      "category": "lab",
+      "components": [
+        "creatinine",
+        "egfr_ckd_epi"
+      ],
+      "mergeGroup": "creatinine_egfr",
+      "availability": "available_at_clinic",
+      "frequency": 1
+    },
+    {
+      "id": "lab_creatinine_clearance_cg",
+      "label": "Клиренс креатинина по Кокрофту—Голту",
+      "category": "calculation",
+      "components": [
+        "age",
+        "sex",
+        "weight",
+        "serum_creatinine"
+      ],
+      "mergeGroup": "creatinine_clearance_cg",
+      "availability": "available_at_clinic",
+      "frequency": 2
+    },
+    {
+      "id": "lab_potassium",
+      "label": "Калий",
+      "category": "lab",
+      "mergeGroup": "potassium",
+      "availability": "available_at_clinic",
+      "frequency": 1
+    },
+    {
+      "id": "lab_sodium",
+      "label": "Натрий",
+      "category": "lab",
+      "mergeGroup": "sodium",
+      "availability": "available_at_clinic",
+      "frequency": 1
+    },
+    {
+      "id": "lab_glucose",
+      "label": "Глюкоза",
+      "category": "lab",
+      "mergeGroup": "glucose",
+      "availability": "available_at_clinic",
+      "frequency": 1
+    },
+    {
+      "id": "lab_hba1c",
+      "label": "HbA1c",
+      "category": "lab",
+      "mergeGroup": "hba1c",
+      "availability": "available_at_clinic",
+      "frequency": 2
+    },
+    {
+      "id": "lab_lipid_profile",
+      "label": "Липидный профиль: общий холестерин, ЛПНП, ЛПВП, триглицериды",
+      "category": "lab",
+      "components": [
+        "total_cholesterol",
+        "ldl_c",
+        "hdl_c",
+        "triglycerides"
+      ],
+      "mergeGroup": "lipid_profile",
+      "availability": "available_at_clinic",
+      "frequency": 1
+    },
+    {
+      "id": "lab_liver_components",
+      "label": "Печёночные показатели: АЛТ, АСТ, общий билирубин, общий белок, альбумин",
+      "category": "lab",
+      "components": [
+        "alt",
+        "ast",
+        "total_bilirubin",
+        "total_protein",
+        "albumin"
+      ],
+      "mergeGroup": "liver_components",
+      "availability": "available_at_clinic",
+      "frequency": 1
+    },
+    {
+      "id": "lab_urinalysis",
+      "label": "Общий анализ мочи",
+      "category": "lab",
+      "mergeGroup": "urinalysis",
+      "availability": "available_at_clinic",
+      "frequency": 1
+    },
+    {
+      "id": "lab_acr",
+      "label": "Альбумин-креатининовое соотношение мочи",
+      "category": "lab",
+      "mergeGroup": "acr",
+      "availability": "available_at_clinic",
+      "frequency": 1
+    },
+    {
+      "id": "lab_ntprobnp",
+      "label": "NT-proBNP",
+      "category": "lab",
+      "mergeGroup": "natriuretic_peptide",
+      "alternativeGroup": "natriuretic_peptide",
+      "availability": "available_at_clinic",
+      "frequency": 2
+    },
+    {
+      "id": "lab_tsh",
+      "label": "ТТГ",
+      "category": "lab",
+      "mergeGroup": "tsh",
+      "availability": "available_at_clinic",
+      "frequency": 2
+    },
+    {
+      "id": "lab_free_t4",
+      "label": "Свободный Т4",
+      "category": "lab",
+      "mergeGroup": "free_t4",
+      "availability": "available_at_clinic",
+      "frequency": 3
+    },
+    {
+      "id": "lab_ferritin",
+      "label": "Ферритин",
+      "category": "lab",
+      "mergeGroup": "iron_status",
+      "availability": "available_at_clinic",
+      "frequency": 2
+    },
+    {
+      "id": "lab_transferrin_saturation",
+      "label": "Насыщение трансферрина железом",
+      "category": "lab",
+      "mergeGroup": "iron_status",
+      "availability": "available_at_clinic",
+      "frequency": 2
+    },
+    {
+      "id": "lab_calcium",
+      "label": "Общий кальций",
+      "category": "lab",
+      "mergeGroup": "calcium",
+      "availability": "available_at_clinic",
+      "frequency": 3
+    },
+    {
+      "id": "lab_phosphate",
+      "label": "Неорганический фосфор",
+      "category": "lab",
+      "mergeGroup": "phosphate",
+      "availability": "available_at_clinic",
+      "frequency": 3
+    },
+    {
+      "id": "lab_pth",
+      "label": "Паратгормон",
+      "category": "lab",
+      "mergeGroup": "pth",
+      "availability": "available_at_clinic",
+      "frequency": 3
+    },
+    {
+      "id": "lab_vitamin_d",
+      "label": "25-ОН витамин D",
+      "category": "lab",
+      "mergeGroup": "vitamin_d",
+      "availability": "available_at_clinic",
+      "frequency": 3
+    },
+    {
+      "id": "lab_alp",
+      "label": "Щелочная фосфатаза",
+      "category": "lab",
+      "mergeGroup": "alp",
+      "availability": "available_at_clinic",
+      "frequency": 3
+    },
+    {
+      "id": "lab_abg",
+      "label": "Кислотно-основное состояние и газы крови",
+      "category": "lab",
+      "mergeGroup": "abg",
+      "availability": "needs_confirmation",
+      "frequency": 3
+    },
+    {
+      "id": "lab_inr",
+      "label": "МНО",
+      "category": "lab",
+      "mergeGroup": "inr",
+      "availability": "available_at_clinic",
+      "frequency": 2
+    },
+    {
+      "id": "lab_ketones",
+      "label": "Кетоновые тела в крови или моче",
+      "category": "lab",
+      "mergeGroup": "ketones",
+      "availability": "needs_confirmation",
+      "frequency": 3
+    },
+    {
+      "id": "lab_troponin",
+      "label": "Тропонин",
+      "category": "lab",
+      "mergeGroup": "troponin",
+      "availability": "available_at_clinic",
+      "frequency": 3
+    },
+    {
+      "id": "ecg",
+      "label": "ЭКГ в 12 отведениях",
+      "category": "instrumental",
+      "mergeGroup": "ecg",
+      "availability": "available_at_clinic",
+      "frequency": 1
+    },
+    {
+      "id": "echo",
+      "label": "ЭхоКГ",
+      "category": "instrumental",
+      "mergeGroup": "echo",
+      "availability": "available_at_clinic",
+      "frequency": 1
+    },
+    {
+      "id": "holter",
+      "label": "Холтеровское мониторирование ЭКГ",
+      "category": "instrumental",
+      "mergeGroup": "holter",
+      "availability": "available_at_clinic",
+      "frequency": 2
+    },
+    {
+      "id": "abpm",
+      "label": "СМАД",
+      "category": "instrumental",
+      "mergeGroup": "abpm",
+      "availability": "available_at_clinic",
+      "frequency": 2
+    },
+    {
+      "id": "chest_xray",
+      "label": "Рентгенография органов грудной клетки",
+      "category": "instrumental",
+      "mergeGroup": "chest_xray",
+      "availability": "needs_confirmation",
+      "frequency": 2
+    },
+    {
+      "id": "renal_ultrasound",
+      "label": "УЗИ почек",
+      "category": "instrumental",
+      "mergeGroup": "renal_ultrasound",
+      "availability": "available_at_clinic",
+      "frequency": 2
+    },
+    {
+      "id": "renal_artery_duplex",
+      "label": "Дуплексное сканирование артерий почек",
+      "category": "instrumental",
+      "mergeGroup": "renal_artery_duplex",
+      "availability": "available_at_clinic",
+      "frequency": 2
+    },
+    {
+      "id": "carotid_duplex",
+      "label": "Дуплексное сканирование БЦА",
+      "category": "instrumental",
+      "mergeGroup": "carotid_duplex",
+      "availability": "available_at_clinic",
+      "frequency": 2
+    },
+    {
+      "id": "coronary_ct",
+      "label": "КТ-коронарография",
+      "category": "instrumental",
+      "mergeGroup": "coronary_ct",
+      "availability": "unavailable_external_route",
+      "frequency": 3
+    },
+    {
+      "id": "stress_test",
+      "label": "Нагрузочный тест",
+      "category": "instrumental",
+      "mergeGroup": "stress_test",
+      "availability": "needs_confirmation",
+      "frequency": 3
+    },
+    {
+      "id": "transesophageal_echo",
+      "label": "ЧП-ЭхоКГ",
+      "category": "instrumental",
+      "mergeGroup": "transesophageal_echo",
+      "availability": "unavailable_external_route",
+      "frequency": 3
+    },
+    {
+      "id": "ophthalmologist",
+      "label": "Офтальмолог",
+      "category": "consultation",
+      "mergeGroup": "ophthalmologist",
+      "availability": "available_at_clinic",
+      "frequency": 2
+    },
+    {
+      "id": "nephrologist",
+      "label": "Нефролог",
+      "category": "consultation",
+      "mergeGroup": "nephrologist",
+      "availability": "available_at_clinic",
+      "frequency": 3
+    },
+    {
+      "id": "endocrinologist",
+      "label": "Эндокринолог",
+      "category": "consultation",
+      "mergeGroup": "endocrinologist",
+      "availability": "available_at_clinic",
+      "frequency": 3
+    },
+    {
+      "id": "neurologist",
+      "label": "Невролог",
+      "category": "consultation",
+      "mergeGroup": "neurologist",
+      "availability": "available_at_clinic",
+      "frequency": 3
+    },
+    {
+      "id": "stress_echo",
+      "label": "Стресс-ЭхоКГ/визуализирующий стресс-тест",
+      "category": "instrumental",
+      "mergeGroup": "stress_echo",
+      "availability": "needs_confirmation",
+      "frequency": 2
+    },
+    {
+      "id": "coronary_angiography",
+      "label": "Коронарография",
+      "category": "instrumental",
+      "mergeGroup": "coronary_angiography",
+      "availability": "unavailable_external_route",
+      "frequency": 3
+    },
+    {
+      "id": "coronary_calcium_ct",
+      "label": "КТ сердца с оценкой коронарного кальциноза",
+      "category": "instrumental",
+      "mergeGroup": "coronary_calcium_ct",
+      "availability": "unavailable_external_route",
+      "frequency": 3
+    },
+    {
+      "id": "creatine_kinase",
+      "label": "Креатинкиназа",
+      "category": "lab",
+      "mergeGroup": "creatine_kinase",
+      "availability": "needs_confirmation",
+      "frequency": 2
+    },
+    {
+      "id": "lab_uric_acid",
+      "label": "Мочевая кислота",
+      "category": "lab",
+      "components": [
+        "uric_acid"
+      ],
+      "availability": "available_at_clinic",
+      "frequency": 1
+    },
+    {
+      "id": "lab_arc",
+      "label": "Альдостерон + ренин (альдостерон-рениновое соотношение)",
+      "category": "lab",
+      "components": [
+        "aldosterone",
+        "renin"
+      ],
+      "availability": "available_at_clinic",
+      "frequency": 3
+    },
+    {
+      "id": "lab_metanephrines",
+      "label": "Метанефрины/норметанефрины (кровь или моча)",
+      "category": "lab",
+      "availability": "needs_confirmation",
+      "frequency": 3
+    },
+    {
+      "id": "lab_cortisol",
+      "label": "Кортизол (кровь, суточная моча или слюна)",
+      "category": "lab",
+      "availability": "available_at_clinic",
+      "frequency": 3
+    },
+    {
+      "id": "adrenal_ct",
+      "label": "КТ надпочечников",
+      "category": "instrumental",
+      "availability": "unavailable_external_route",
+      "frequency": 3
+    },
+    {
+      "id": "aorta_ct",
+      "label": "МСКТ-ангиография аорты",
+      "category": "instrumental",
+      "availability": "unavailable_external_route",
+      "frequency": 3
+    },
+    {
+      "id": "lab_ogtt",
+      "label": "Глюкозотолерантный тест (ПГТТ)",
+      "category": "lab",
+      "availability": "needs_confirmation",
+      "frequency": 2
+    },
+    {
+      "id": "foot_exam",
+      "label": "Осмотр стоп (чувствительность, пульсация артерий)",
+      "category": "exam",
+      "availability": "available_at_clinic",
+      "frequency": 2
+    }
+  ],
+  "sources": [
+    {
+      "id": "kr_ag_2024",
+      "label": "Клинические рекомендации: Артериальная гипертензия у взрослых, 2024",
+      "type": "clinical_guideline",
+      "status": "current"
+    },
+    {
+      "id": "kr_stable_ihd_2024",
+      "label": "Клинические рекомендации: Стабильная ишемическая болезнь сердца, 2024",
+      "type": "clinical_guideline",
+      "status": "current"
+    },
+    {
+      "id": "kr_hf_2024",
+      "label": "Клинические рекомендации: Хроническая сердечная недостаточность, 2024",
+      "type": "clinical_guideline",
+      "status": "current"
+    },
+    {
+      "id": "kr_af_2025",
+      "label": "Клинические рекомендации: Фибрилляция и трепетание предсердий, 2025",
+      "type": "clinical_guideline",
+      "status": "current"
+    },
+    {
+      "id": "kr_dm2_2022",
+      "label": "Клинические рекомендации: Сахарный диабет 2 типа, 2022",
+      "type": "clinical_guideline",
+      "status": "current"
+    },
+    {
+      "id": "algorithms_dm_2025",
+      "label": "Алгоритмы специализированной медицинской помощи больным сахарным диабетом, 12-й выпуск, 2025",
+      "type": "official_algorithm",
+      "status": "current"
+    },
+    {
+      "id": "kr_ckd_2024",
+      "label": "Клинические рекомендации: Хроническая болезнь почек, 2024",
+      "type": "clinical_guideline",
+      "status": "current"
+    },
+    {
+      "id": "standard_ag_1193n",
+      "label": "Стандарт медицинской помощи взрослым при артериальной гипертензии, приказ 1193н",
+      "type": "medical_care_standard",
+      "status": "reference_for_service_coverage"
+    },
+    {
+      "id": "standard_stable_ihd_410n",
+      "label": "Стандарт медицинской помощи при стабильной ИБС, приказ 410н",
+      "type": "medical_care_standard",
+      "status": "reference_for_service_coverage"
+    },
+    {
+      "id": "standard_hf_612n",
+      "label": "Стандарт медицинской помощи при ХСН, приказ 612н",
+      "type": "medical_care_standard",
+      "status": "reference_for_service_coverage"
+    },
+    {
+      "id": "standard_af_435n",
+      "label": "Стандарт медицинской помощи при ФП и ТП, приказ 435н",
+      "type": "medical_care_standard",
+      "status": "reference_for_service_coverage"
+    },
+    {
+      "id": "standard_dm2_1054n",
+      "label": "Стандарт медицинской помощи при СД 2 типа, приказ 1054н",
+      "type": "medical_care_standard",
+      "status": "reference_for_service_coverage"
+    }
+  ],
+  "rules": [
+    {
+      "id": "AG-ECG-001",
+      "diagnosisId": "hypertension",
+      "stageIds": [
+        "primary_visit",
+        "annual_control",
+        "follow_up",
+        "worsening"
+      ],
+      "examinationId": "ecg",
+      "status": "mandatory_for_stage",
+      "autoSelect": true,
+      "condition": null,
+      "reason": "Оценка ритма, частоты сердечных сокращений и поражения сердца.",
+      "sourceId": "kr_ag_2024"
+    },
+    {
+      "id": "AG-ECHO-001",
+      "diagnosisId": "hypertension",
+      "stageIds": [
+        "primary_visit",
+        "worsening"
+      ],
+      "examinationId": "echo",
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": null,
+      "reason": "Оценка структуры и функции сердца при соответствующем клиническом вопросе.",
+      "sourceId": "kr_ag_2024"
+    },
+    {
+      "id": "AG-ABPM-001",
+      "diagnosisId": "hypertension",
+      "stageIds": [
+        "primary_visit",
+        "follow_up"
+      ],
+      "examinationId": "abpm",
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": null,
+      "reason": "Подтверждение диагноза и оценка контроля АД.",
+      "sourceId": "kr_ag_2024"
+    },
+    {
+      "id": "AG-RENAL-DUPLEX-001",
+      "diagnosisId": "hypertension",
+      "stageIds": [
+        "primary_visit",
+        "worsening"
+      ],
+      "examinationId": "renal_artery_duplex",
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": null,
+      "reason": "Обследование при подозрении на реноваскулярную АГ.",
+      "sourceId": "kr_ag_2024"
+    },
+    {
+      "id": "IHD-TROPONIN-001",
+      "diagnosisId": "stable_ihd",
+      "stageIds": [
+        "worsening"
+      ],
+      "examinationId": "lab_troponin",
+      "status": "emergency",
+      "autoSelect": true,
+      "condition": "acute_coronary_syndrome_suspected",
+      "reason": "Оценка острой коронарной ситуации; не рутинное исследование стабильной ИБС.",
+      "sourceId": "kr_stable_ihd_2024"
+    },
+    {
+      "id": "IHD-CORONARY-CT-001",
+      "diagnosisId": "stable_ihd",
+      "stageIds": [
+        "primary_visit",
+        "worsening"
+      ],
+      "examinationId": "coronary_ct",
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": null,
+      "reason": "Уточнение коронарной анатомии по клиническим показаниям.",
+      "sourceId": "kr_stable_ihd_2024"
+    },
+    {
+      "id": "HF-BNP-001",
+      "diagnosisId": "heart_failure",
+      "stageIds": [
+        "primary_visit",
+        "worsening"
+      ],
+      "examinationId": "lab_ntprobnp",
+      "status": "mandatory_if_condition",
+      "autoSelect": true,
+      "condition": "hf_suspected_or_primary_assessment_and_test_not_already_used",
+      "reason": "Подтверждение или исключение предполагаемой ХСН (NT-proBNP — более чувствительный маркер).",
+      "sourceId": "kr_hf_2024",
+      "note": "BNP и NT-proBNP являются альтернативами одной задачи. Оба одновременно не добавляются."
+    },
+    {
+      "id": "HF-ECHO-001",
+      "diagnosisId": "heart_failure",
+      "stageIds": [
+        "primary_visit",
+        "worsening",
+        "post_event"
+      ],
+      "examinationId": "echo",
+      "status": "mandatory_for_stage",
+      "autoSelect": true,
+      "condition": "established_or_suspected_hf",
+      "reason": "Оценка структуры сердца, функции ЛЖ и фенотипа ХСН.",
+      "sourceId": "kr_hf_2024"
+    },
+    {
+      "id": "HF-IRON-001",
+      "diagnosisId": "heart_failure",
+      "stageIds": [
+        "primary_visit",
+        "worsening",
+        "post_event"
+      ],
+      "examinationIds": [
+        "lab_ferritin",
+        "lab_transferrin_saturation"
+      ],
+      "status": "mandatory_for_stage",
+      "autoSelect": true,
+      "condition": "established_hf",
+      "reason": "Оценка дефицита железа и выбора тактики лечения.",
+      "sourceId": "kr_hf_2024",
+      "note": "Универсальный фиксированный интервал в КР не задан; динамика определяется клинической задачей."
+    },
+    {
+      "id": "HF-CORE-LABS-001",
+      "diagnosisId": "heart_failure",
+      "stageIds": [
+        "primary_visit",
+        "worsening",
+        "post_event"
+      ],
+      "examinationIds": [
+        "lab_cbc",
+        "lab_potassium",
+        "lab_sodium",
+        "lab_creatinine_egfr",
+        "lab_lipid_profile",
+        "lab_liver_components",
+        "lab_glucose",
+        "lab_tsh",
+        "lab_urinalysis",
+        "ecg"
+      ],
+      "status": "mandatory_for_stage",
+      "autoSelect": true,
+      "condition": "established_or_suspected_hf",
+      "reason": "Первичная оценка сопутствующей патологии и безопасности лечения.",
+      "sourceId": "kr_hf_2024"
+    },
+    {
+      "id": "AF-ECG-001",
+      "diagnosisId": "atrial_fibrillation",
+      "stageIds": [
+        "primary_visit",
+        "follow_up",
+        "worsening"
+      ],
+      "examinationId": "ecg",
+      "status": "mandatory_if_condition",
+      "autoSelect": true,
+      "condition": "af_suspected_or_established",
+      "reason": "Подтверждение или контроль ритма и ЧСС.",
+      "sourceId": "kr_af_2025"
+    },
+    {
+      "id": "AF-ECHO-001",
+      "diagnosisId": "atrial_fibrillation",
+      "stageIds": [
+        "primary_visit",
+        "follow_up",
+        "worsening",
+        "post_event"
+      ],
+      "examinationId": "echo",
+      "status": "mandatory_for_situation",
+      "autoSelect": true,
+      "condition": "established_af",
+      "reason": "Оценка структуры и функции сердца при ФП/ТП.",
+      "sourceId": "kr_af_2025"
+    },
+    {
+      "id": "AF-HOLTER-001",
+      "diagnosisId": "atrial_fibrillation",
+      "stageIds": [
+        "primary_visit",
+        "follow_up",
+        "worsening"
+      ],
+      "examinationId": "holter",
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": null,
+      "reason": "Оценка связи жалоб с аритмией и контроля ЧСС.",
+      "sourceId": "kr_af_2025"
+    },
+    {
+      "id": "AF-ANTICOAG-SAFETY-001",
+      "diagnosisId": "atrial_fibrillation",
+      "stageIds": [
+        "primary_visit",
+        "follow_up",
+        "post_event"
+      ],
+      "examinationIds": [
+        "lab_cbc",
+        "lab_liver_components",
+        "lab_creatinine_egfr"
+      ],
+      "status": "mandatory_if_condition",
+      "autoSelect": true,
+      "condition": "af_selected_safety_branch_active",
+      "reason": "Проверка безопасности антитромботической терапии.",
+      "sourceId": "kr_af_2025",
+      "note": "Ветка включается при ФП, но не утверждает, что антикоагулянт уже назначен."
+    },
+    {
+      "id": "AF-DOAC-CG-001",
+      "diagnosisId": "atrial_fibrillation",
+      "stageIds": [
+        "primary_visit",
+        "annual_control"
+      ],
+      "examinationId": "lab_creatinine_clearance_cg",
+      "status": "mandatory_if_condition",
+      "autoSelect": true,
+      "condition": "antithrombotic_status_is_doac",
+      "reason": "Расчёт для дозирования и безопасности ПОАК.",
+      "sourceId": "kr_af_2025"
+    },
+    {
+      "id": "AF-WARFARIN-INR-001",
+      "diagnosisId": "atrial_fibrillation",
+      "stageIds": [
+        "primary_visit",
+        "follow_up"
+      ],
+      "examinationId": "lab_inr",
+      "status": "mandatory_if_condition",
+      "autoSelect": true,
+      "condition": "antithrombotic_status_is_warfarin",
+      "reason": "Контроль терапии варфарином.",
+      "sourceId": "kr_af_2025"
+    },
+    {
+      "id": "DM-INITIAL-001",
+      "diagnosisId": "type2_diabetes",
+      "stageIds": [
+        "primary_visit",
+        "follow_up"
+      ],
+      "examinationIds": [
+        "lab_cbc",
+        "lab_glucose",
+        "lab_creatinine_egfr",
+        "lab_lipid_profile",
+        "lab_liver_components",
+        "lab_potassium",
+        "lab_sodium",
+        "lab_urinalysis",
+        "ecg",
+        "lab_uric_acid"
+      ],
+      "status": "mandatory_for_stage",
+      "autoSelect": true,
+      "condition": "diabetes_status_is_newly_established",
+      "reason": "Скрининг осложнений и сопутствующей патологии при установлении диагноза.",
+      "sourceId": "kr_dm2_2022"
+    },
+    {
+      "id": "DM-ACR-001",
+      "diagnosisId": "type2_diabetes",
+      "stageIds": [
+        "primary_visit",
+        "annual_control",
+        "follow_up"
+      ],
+      "examinationId": "lab_acr",
+      "status": "mandatory_if_condition",
+      "autoSelect": true,
+      "condition": "type2_diabetes_and_no_urine_inflammation",
+      "reason": "Скрининг диабетической нефропатии и оценка альбуминурии.",
+      "sourceId": "kr_dm2_2022"
+    },
+    {
+      "id": "DM-HBA1C-001",
+      "diagnosisId": "type2_diabetes",
+      "stageIds": [
+        "follow_up",
+        "annual_control"
+      ],
+      "examinationId": "lab_hba1c",
+      "status": "mandatory_for_stage",
+      "autoSelect": true,
+      "condition": "established_type2_diabetes",
+      "reason": "Контроль гликемии; КР указывает интервал 1 раз в 3 месяца.",
+      "sourceId": "kr_dm2_2022",
+      "frequency": "every_3_months"
+    },
+    {
+      "id": "DM-ANNUAL-001",
+      "diagnosisId": "type2_diabetes",
+      "stageIds": [
+        "annual_control"
+      ],
+      "examinationIds": [
+        "lab_cbc",
+        "lab_creatinine_egfr",
+        "lab_urinalysis",
+        "lab_acr",
+        "lab_lipid_profile",
+        "lab_liver_components",
+        "ecg",
+        "ophthalmologist",
+        "lab_uric_acid"
+      ],
+      "status": "mandatory_for_stage",
+      "autoSelect": true,
+      "condition": "established_type2_diabetes_without_stage_specific_complication",
+      "reason": "Ежегодный контроль осложнений и сопутствующей патологии.",
+      "sourceId": "kr_dm2_2022",
+      "note": "При рСКФ <60 или АКР >=3 мг/ммоль частота почечного контроля повышается отдельными условиями."
+    },
+    {
+      "id": "DM-RETINOPATHY-001",
+      "diagnosisId": "type2_diabetes",
+      "stageIds": [
+        "primary_visit",
+        "annual_control"
+      ],
+      "examinationId": "ophthalmologist",
+      "status": "mandatory_for_stage",
+      "autoSelect": true,
+      "condition": "newly_established_or_established_type2_diabetes",
+      "reason": "Скрининг диабетических изменений сетчатки.",
+      "sourceId": "kr_dm2_2022"
+    },
+    {
+      "id": "DM-KETONES-001",
+      "diagnosisId": "type2_diabetes",
+      "stageIds": [
+        "worsening"
+      ],
+      "examinationId": "lab_ketones",
+      "status": "emergency",
+      "autoSelect": true,
+      "condition": "metabolic_decompensation",
+      "reason": "Оценка кетоза при признаках метаболической декомпенсации.",
+      "sourceId": "algorithms_dm_2025"
+    },
+    {
+      "id": "CKD-EGFR-001",
+      "diagnosisId": "ckd",
+      "stageIds": [
+        "primary_visit",
+        "follow_up",
+        "annual_control",
+        "worsening"
+      ],
+      "examinationId": "lab_creatinine_egfr",
+      "status": "mandatory_for_situation",
+      "autoSelect": true,
+      "condition": "suspected_or_established_ckd",
+      "reason": "Стадирование, прогноз и мониторинг функции почек.",
+      "sourceId": "kr_ckd_2024"
+    },
+    {
+      "id": "CKD-ACR-001",
+      "diagnosisId": "ckd",
+      "stageIds": [
+        "primary_visit",
+        "follow_up",
+        "annual_control"
+      ],
+      "examinationId": "lab_acr",
+      "status": "mandatory_for_situation",
+      "autoSelect": true,
+      "condition": "suspected_or_established_ckd_and_no_urine_inflammation",
+      "reason": "Градация альбуминурии, подтверждение и прогноз ХБП.",
+      "sourceId": "kr_ckd_2024"
+    },
+    {
+      "id": "CKD-URINALYSIS-001",
+      "diagnosisId": "ckd",
+      "stageIds": [
+        "primary_visit",
+        "follow_up",
+        "annual_control"
+      ],
+      "examinationId": "lab_urinalysis",
+      "status": "mandatory_for_situation",
+      "autoSelect": true,
+      "condition": "suspected_or_established_ckd",
+      "reason": "Оценка повреждения почек и воспалительных изменений мочи.",
+      "sourceId": "kr_ckd_2024"
+    },
+    {
+      "id": "CKD-RENAL-US-001",
+      "diagnosisId": "ckd",
+      "stageIds": [
+        "primary_visit"
+      ],
+      "examinationId": "renal_ultrasound",
+      "status": "mandatory_for_stage",
+      "autoSelect": true,
+      "condition": null,
+      "reason": "Оценка макроскопических изменений почек.",
+      "sourceId": "kr_ckd_2024",
+      "note": "Фиксированный универсальный интервал повторения не задан; на плановом визите добавлять только при ответе «Да» на вопрос о повторении УЗИ почек."
+    },
+    {
+      "id": "CKD-STAGE-345-MBD-001",
+      "diagnosisId": "ckd",
+      "stageIds": [
+        "primary_visit",
+        "follow_up",
+        "annual_control",
+        "worsening"
+      ],
+      "examinationIds": [
+        "lab_calcium",
+        "lab_phosphate",
+        "lab_pth",
+        "lab_vitamin_d",
+        "lab_alp"
+      ],
+      "status": "mandatory_if_condition",
+      "autoSelect": true,
+      "condition": "ckd_stage_is_C3_or_higher_and_stage_rule_active",
+      "reason": "Оценка минерально-костных нарушений ХБП.",
+      "sourceId": "kr_ckd_2024"
+    },
+    {
+      "id": "CKD-ABG-001",
+      "diagnosisId": "ckd",
+      "stageIds": [
+        "primary_visit",
+        "follow_up",
+        "worsening"
+      ],
+      "examinationId": "lab_abg",
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": "ckd_stage_is_C3_or_higher",
+      "reason": "Оценка метаболического ацидоза по условию.",
+      "sourceId": "kr_ckd_2024"
+    },
+    {
+      "id": "CKD-ECHO-001",
+      "diagnosisId": "ckd",
+      "stageIds": [
+        "primary_visit",
+        "follow_up",
+        "annual_control",
+        "worsening"
+      ],
+      "examinationId": "echo",
+      "status": "mandatory_if_condition",
+      "autoSelect": true,
+      "condition": "ckd_stage_is_C3_or_higher",
+      "reason": "Оценка структурных и гемодинамических изменений при ХБП С3–С5Д.",
+      "sourceId": "kr_ckd_2024"
+    },
+    {
+      "id": "CKD-RENAL-ARTERY-001",
+      "diagnosisId": "ckd",
+      "stageIds": [
+        "primary_visit",
+        "worsening"
+      ],
+      "examinationId": "renal_artery_duplex",
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": null,
+      "reason": "Оценка подозреваемого реноваскулярного поражения.",
+      "sourceId": "kr_ckd_2024"
+    },
+    {
+      "id": "CKD-ABPM-001",
+      "diagnosisId": "ckd",
+      "stageIds": [
+        "primary_visit",
+        "follow_up"
+      ],
+      "examinationId": "abpm",
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": "ckd_plus_hypertension",
+      "reason": "Уточнение АГ, контроля терапии и прогноза при ХБП.",
+      "sourceId": "kr_ckd_2024"
+    },
+    {
+      "id": "AG-CORE-LABS-001",
+      "diagnosisId": "hypertension",
+      "stageIds": [
+        "primary_visit",
+        "follow_up",
+        "annual_control"
+      ],
+      "examinationIds": [
+        "lab_cbc",
+        "lab_glucose",
+        "lab_creatinine_egfr",
+        "lab_potassium",
+        "lab_sodium",
+        "lab_lipid_profile",
+        "lab_liver_components",
+        "lab_urinalysis",
+        "lab_acr",
+        "lab_uric_acid"
+      ],
+      "status": "mandatory_for_stage",
+      "autoSelect": true,
+      "condition": null,
+      "reason": "Базовое лабораторное обследование АГ: оценка риска, органов-мишеней и сопутствующей патологии.",
+      "sourceId": "kr_ag_2024"
+    },
+    {
+      "id": "AG-ALBUMIN-001",
+      "diagnosisId": "hypertension",
+      "stageIds": [
+        "primary_visit",
+        "follow_up",
+        "annual_control"
+      ],
+      "examinationIds": [
+        "lab_acr"
+      ],
+      "status": "mandatory_for_stage",
+      "autoSelect": true,
+      "condition": null,
+      "reason": "Выявление поражения почек и оценка сердечно-сосудистого риска.",
+      "sourceId": "kr_ag_2024"
+    },
+    {
+      "id": "AG-EYE-001",
+      "diagnosisId": "hypertension",
+      "stageIds": [
+        "primary_visit",
+        "annual_control"
+      ],
+      "examinationIds": [
+        "ophthalmologist"
+      ],
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": null,
+      "reason": "Оценка глазного дна при соответствующей степени АГ или сочетании с СД.",
+      "sourceId": "kr_ag_2024"
+    },
+    {
+      "diagnosisId": "hypertension",
+      "sourceId": "kr_ag_2024",
+      "autoSelect": false,
+      "status": "indicated_if_condition",
+      "id": "AG-SECONDARY-PGA-001",
+      "stageIds": [
+        "primary_visit",
+        "annual_control",
+        "worsening"
+      ],
+      "examinationId": "lab_arc",
+      "condition": null,
+      "reason": "Исключение первичного гиперальдостеронизма при резистентной АГ или гипокалиемии (КР: АРС)."
+    },
+    {
+      "diagnosisId": "hypertension",
+      "sourceId": "kr_ag_2024",
+      "autoSelect": false,
+      "status": "indicated_if_condition",
+      "id": "AG-SECONDARY-PHEO-001",
+      "stageIds": [
+        "primary_visit",
+        "annual_control",
+        "worsening"
+      ],
+      "examinationId": "lab_metanephrines",
+      "condition": null,
+      "reason": "Исключение феохромоцитомы при кризовом течении или пароксизмальных симптомах."
+    },
+    {
+      "diagnosisId": "hypertension",
+      "sourceId": "kr_ag_2024",
+      "autoSelect": false,
+      "status": "indicated_if_condition",
+      "id": "AG-SECONDARY-CUSHING-001",
+      "stageIds": [
+        "primary_visit",
+        "annual_control",
+        "worsening"
+      ],
+      "examinationId": "lab_cortisol",
+      "condition": null,
+      "reason": "Исключение синдрома Кушинга при клинических признаках."
+    },
+    {
+      "diagnosisId": "hypertension",
+      "sourceId": "kr_ag_2024",
+      "autoSelect": false,
+      "status": "indicated_if_condition",
+      "id": "AG-ADRENAL-CT-001",
+      "stageIds": [
+        "primary_visit",
+        "annual_control",
+        "worsening"
+      ],
+      "examinationId": "adrenal_ct",
+      "condition": null,
+      "reason": "КТ надпочечников при инциденталоме или уточнении объёмного образования."
+    },
+    {
+      "diagnosisId": "hypertension",
+      "sourceId": "kr_ag_2024",
+      "autoSelect": false,
+      "status": "indicated_if_condition",
+      "id": "AG-CAROTID-001",
+      "stageIds": [
+        "primary_visit",
+        "annual_control"
+      ],
+      "examinationId": "carotid_duplex",
+      "condition": null,
+      "reason": "Выявление атеросклеротических бляшек/стенозов БЦА при высоком ССР, возрасте >40/50 лет, ЦВБ, атеросклерозе других локализаций (КР п. 2.8)."
+    },
+    {
+      "diagnosisId": "hypertension",
+      "sourceId": "kr_ag_2024",
+      "autoSelect": false,
+      "status": "indicated_if_condition",
+      "id": "AG-RENAL-US-001",
+      "stageIds": [
+        "primary_visit",
+        "annual_control",
+        "worsening"
+      ],
+      "examinationId": "renal_ultrasound",
+      "condition": null,
+      "reason": "УЗИ почек при нарушении функции почек или альбуминурии у пациента с АГ."
+    },
+    {
+      "diagnosisId": "hypertension",
+      "sourceId": "kr_ag_2024",
+      "autoSelect": false,
+      "status": "indicated_if_condition",
+      "id": "AG-HBA1C-001",
+      "stageIds": [
+        "primary_visit",
+        "annual_control"
+      ],
+      "examinationId": "lab_hba1c",
+      "condition": null,
+      "reason": "HbA1c при предиабете, ожирении или глюкозе ≥6,1 ммоль/л."
+    },
+    {
+      "diagnosisId": "hypertension",
+      "sourceId": "kr_ag_2024",
+      "autoSelect": false,
+      "status": "indicated_if_condition",
+      "id": "AG-AORTA-CT-001",
+      "stageIds": [
+        "primary_visit",
+        "annual_control",
+        "worsening"
+      ],
+      "examinationId": "aorta_ct",
+      "condition": null,
+      "reason": "МСКТ-ангиография аорты при расширении аорты ≥40 мм на ЭхоКГ (исключение аневризмы/диссекции)."
+    },
+    {
+      "diagnosisId": "hypertension",
+      "sourceId": "kr_ag_2024",
+      "autoSelect": false,
+      "status": "indicated_if_condition",
+      "id": "AG-NEURO-001",
+      "stageIds": [
+        "primary_visit",
+        "annual_control",
+        "worsening"
+      ],
+      "examinationId": "neurologist",
+      "condition": null,
+      "reason": "Невролог при неврологических симптомах и/или когнитивных нарушениях (КР п. 2.7)."
+    },
+    {
+      "diagnosisId": "hypertension",
+      "sourceId": "kr_ag_2024",
+      "autoSelect": false,
+      "status": "indicated_if_condition",
+      "id": "AG-ENDO-001",
+      "stageIds": [
+        "primary_visit",
+        "annual_control",
+        "worsening"
+      ],
+      "examinationId": "endocrinologist",
+      "condition": "ag_endocrinologist_indicated",
+      "reason": "Эндокринолог при СД, ожирении или подозрении на вторичную АГ (КР п. 2.7)."
+    },
+    {
+      "diagnosisId": "hypertension",
+      "sourceId": "kr_ag_2024",
+      "autoSelect": true,
+      "status": "mandatory_for_stage",
+      "id": "AG-TREAT-SAFETY-001",
+      "stageIds": [
+        "follow_up"
+      ],
+      "examinationIds": [
+        "lab_potassium",
+        "lab_creatinine_egfr",
+        "lab_sodium"
+      ],
+      "condition": null,
+      "reason": "Контроль калия, натрия и функции почек через 2–4 недели после изменения терапии (диуретики, иАПФ, БРА)."
+    },
+    {
+      "id": "IHD-PRIMARY-LABS-001",
+      "diagnosisId": "stable_ihd",
+      "stageIds": [
+        "primary_visit"
+      ],
+      "examinationIds": [
+        "lab_cbc",
+        "lab_creatinine_egfr",
+        "lab_lipid_profile"
+      ],
+      "status": "mandatory_for_stage",
+      "autoSelect": true,
+      "condition": null,
+      "reason": "Первичное обследование при ИБС/подозрении на ИБС.",
+      "sourceId": "kr_stable_ihd_2024"
+    },
+    {
+      "id": "IHD-PRIMARY-ECG-001",
+      "diagnosisId": "stable_ihd",
+      "stageIds": [
+        "primary_visit"
+      ],
+      "examinationIds": [
+        "ecg"
+      ],
+      "status": "mandatory_for_stage",
+      "autoSelect": true,
+      "condition": null,
+      "reason": "ЭКГ в покое для оценки ишемических изменений, рубцовых изменений и ритма.",
+      "sourceId": "kr_stable_ihd_2024"
+    },
+    {
+      "id": "IHD-FOLLOW-UP-CORE-001",
+      "diagnosisId": "stable_ihd",
+      "stageIds": [
+        "follow_up",
+        "annual_control",
+        "post_event"
+      ],
+      "examinationIds": [
+        "ecg",
+        "lab_lipid_profile"
+      ],
+      "status": "mandatory_for_stage",
+      "autoSelect": true,
+      "condition": null,
+      "reason": "Плановый контроль ритма и факторов сердечно-сосудистого риска.",
+      "sourceId": "kr_stable_ihd_2024"
+    },
+    {
+      "id": "IHD-PRIMARY-ECHO-001",
+      "diagnosisId": "stable_ihd",
+      "stageIds": [
+        "primary_visit"
+      ],
+      "examinationIds": [
+        "echo"
+      ],
+      "status": "mandatory_for_stage",
+      "autoSelect": true,
+      "condition": null,
+      "reason": "ЭхоКГ в покое как часть первичного обследования и оценки функции ЛЖ.",
+      "sourceId": "kr_stable_ihd_2024"
+    },
+    {
+      "id": "IHD-ANNUAL-001",
+      "diagnosisId": "stable_ihd",
+      "stageIds": [
+        "annual_control"
+      ],
+      "examinationIds": [
+        "lab_cbc",
+        "lab_creatinine_egfr",
+        "lab_lipid_profile",
+        "lab_glucose"
+      ],
+      "status": "mandatory_for_stage",
+      "autoSelect": true,
+      "condition": null,
+      "reason": "Ежегодный контроль при стабильной ИБС для коррекции терапии.",
+      "sourceId": "kr_stable_ihd_2024",
+      "frequency": "annually"
+    },
+    {
+      "id": "IHD-DIABETES-SCREEN-001",
+      "diagnosisId": "stable_ihd",
+      "stageIds": [
+        "primary_visit"
+      ],
+      "examinationIds": [
+        "lab_hba1c"
+      ],
+      "status": "mandatory_if_condition",
+      "autoSelect": true,
+      "condition": "ihd_diabetes_screening_indicated",
+      "reason": "Скрининг СД при клинических основаниях; при неубедительных результатах возможен ПГТТ.",
+      "sourceId": "kr_stable_ihd_2024"
+    },
+    {
+      "id": "IHD-THYROID-001",
+      "diagnosisId": "stable_ihd",
+      "stageIds": [
+        "primary_visit",
+        "worsening"
+      ],
+      "examinationIds": [
+        "lab_tsh"
+      ],
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": null,
+      "reason": "Оценка функции щитовидной железы при клинических проявлениях.",
+      "sourceId": "kr_stable_ihd_2024"
+    },
+    {
+      "id": "IHD-HF-001",
+      "diagnosisId": "stable_ihd",
+      "stageIds": [
+        "primary_visit",
+        "follow_up",
+        "annual_control",
+        "worsening",
+        "post_event"
+      ],
+      "examinationIds": [
+        "lab_ntprobnp"
+      ],
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": null,
+      "reason": "Исключение СН и оценка прогноза при ИБС с подозрением на СН.",
+      "sourceId": "kr_stable_ihd_2024"
+    },
+    {
+      "id": "IHD-ISCHEMIA-001",
+      "diagnosisId": "stable_ihd",
+      "stageIds": [
+        "primary_visit",
+        "worsening"
+      ],
+      "examinationIds": [
+        "stress_echo"
+      ],
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": null,
+      "reason": "Один выбранный неинвазивный визуализирующий метод оценки ишемии по ПТВ и клинической задаче.",
+      "sourceId": "kr_stable_ihd_2024",
+      "note": "Выбор метода: стресс-ЭхоКГ, стресс-МРТ, стресс-ОФЭКТ/ПЭТ или другой доступный метод; одновременно все методы не добавлять."
+    },
+    {
+      "id": "IHD-CORONARY-CT-002",
+      "diagnosisId": "stable_ihd",
+      "stageIds": [
+        "primary_visit"
+      ],
+      "examinationIds": [
+        "coronary_ct"
+      ],
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": null,
+      "reason": "КТ-коронарография как первый специфический метод в соответствующей группе ПТВ.",
+      "sourceId": "kr_stable_ihd_2024"
+    },
+    {
+      "id": "IHD-CALCIUM-001",
+      "diagnosisId": "stable_ihd",
+      "stageIds": [
+        "primary_visit"
+      ],
+      "examinationIds": [
+        "coronary_calcium_ct"
+      ],
+      "status": "consider",
+      "autoSelect": false,
+      "condition": null,
+      "reason": "Оценка коронарного кальциноза для изменения ПТВ.",
+      "sourceId": "kr_stable_ihd_2024"
+    },
+    {
+      "id": "IHD-CAG-001",
+      "diagnosisId": "stable_ihd",
+      "stageIds": [
+        "worsening",
+        "post_event"
+      ],
+      "examinationIds": [
+        "coronary_angiography"
+      ],
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": null,
+      "reason": "Инвазивная оценка при прогрессировании ИБС или вопросе о реваскуляризации.",
+      "sourceId": "kr_stable_ihd_2024"
+    },
+    {
+      "id": "IHD-CK-001",
+      "diagnosisId": "stable_ihd",
+      "stageIds": [
+        "follow_up"
+      ],
+      "examinationIds": [
+        "creatine_kinase"
+      ],
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": null,
+      "reason": "Исключение миопатии при мышечных болях на фоне статина.",
+      "sourceId": "kr_stable_ihd_2024"
+    },
+    {
+      "id": "CKD-RENAL-US-ROUTINE-001",
+      "diagnosisId": "ckd",
+      "stageIds": [
+        "follow_up"
+      ],
+      "examinationId": "renal_ultrasound",
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": null,
+      "reason": "Повтор УЗИ почек на плановом визите — по клиническим показаниям (жёсткий интервал в КР не задан).",
+      "sourceId": "kr_ckd_2024"
+    },
+    {
+      "id": "HF-IRON-ROUTINE-001",
+      "diagnosisId": "heart_failure",
+      "stageIds": [
+        "follow_up"
+      ],
+      "examinationIds": [
+        "lab_ferritin",
+        "lab_transferrin_saturation"
+      ],
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": null,
+      "reason": "Контроль дефицита железа на плановом визите — по показаниям (жёсткий универсальный интервал в КР не задан).",
+      "sourceId": "kr_hf_2024"
+    },
+    {
+      "id": "HF-CXR-001",
+      "diagnosisId": "heart_failure",
+      "stageIds": [
+        "primary_visit",
+        "worsening"
+      ],
+      "examinationId": "chest_xray",
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": null,
+      "reason": "Рентгенография ОГК при впервые возникших симптомах ХСН или для исключения лёгочной патологии.",
+      "sourceId": "kr_hf_2024"
+    },
+    {
+      "id": "AF-BASE-PRIMARY-001",
+      "diagnosisId": "atrial_fibrillation",
+      "stageIds": [
+        "primary_visit"
+      ],
+      "examinationIds": [
+        "lab_urinalysis",
+        "lab_potassium",
+        "lab_sodium",
+        "lab_glucose",
+        "lab_tsh",
+        "lab_uric_acid"
+      ],
+      "status": "mandatory_for_stage",
+      "autoSelect": true,
+      "condition": null,
+      "reason": "Первичная оценка ФП/ТП: ОАМ, электролиты, глюкоза, ТТГ, мочевая кислота; сопутствующая патология и триггеры аритмии.",
+      "sourceId": "kr_af_2025"
+    },
+    {
+      "id": "DM-DIAG-GLUC-001",
+      "diagnosisId": "type2_diabetes",
+      "stageIds": [
+        "primary_visit"
+      ],
+      "examinationId": "lab_glucose",
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": "diagnostic_path_glucose",
+      "reason": "Подтверждение СД: глюкоза плазмы (выбранный диагностический путь).",
+      "sourceId": "kr_dm2_2022"
+    },
+    {
+      "id": "DM-DIAG-HBA1C-001",
+      "diagnosisId": "type2_diabetes",
+      "stageIds": [
+        "primary_visit"
+      ],
+      "examinationId": "lab_hba1c",
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": "diagnostic_path_hba1c",
+      "reason": "Подтверждение СД: HbA1c (выбранный диагностический путь).",
+      "sourceId": "kr_dm2_2022"
+    },
+    {
+      "id": "DM-DIAG-OGTT-001",
+      "diagnosisId": "type2_diabetes",
+      "stageIds": [
+        "primary_visit"
+      ],
+      "examinationId": "lab_ogtt",
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": "diagnostic_path_ogtt",
+      "reason": "Подтверждение СД: ПГТТ (выбранный диагностический путь).",
+      "sourceId": "kr_dm2_2022"
+    },
+    {
+      "id": "DM-FOOT-001",
+      "diagnosisId": "type2_diabetes",
+      "stageIds": [
+        "primary_visit",
+        "annual_control"
+      ],
+      "examinationId": "foot_exam",
+      "status": "mandatory_for_stage",
+      "autoSelect": true,
+      "condition": null,
+      "reason": "Осмотр стоп: чувствительность, пульсация артерий; скрининг диабетической стопы (проводит врач).",
+      "sourceId": "kr_dm2_2022"
+    },
+    {
+      "id": "CKD-BASE-001",
+      "diagnosisId": "ckd",
+      "stageIds": [
+        "primary_visit",
+        "annual_control"
+      ],
+      "examinationIds": [
+        "lab_cbc",
+        "lab_potassium",
+        "lab_sodium",
+        "lab_uric_acid",
+        "lab_lipid_profile"
+      ],
+      "status": "mandatory_for_stage",
+      "autoSelect": true,
+      "condition": null,
+      "reason": "Базовая панель ХБП: ОАК, электролиты, мочевая кислота, липиды; диагностика системных осложнений.",
+      "sourceId": "kr_ckd_2024"
+    },
+    {
+      "id": "CKD-VASC-CALC-001",
+      "diagnosisId": "ckd",
+      "stageIds": [
+        "primary_visit",
+        "annual_control"
+      ],
+      "examinationId": "carotid_duplex",
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": "ckd_stage_is_C3_or_higher",
+      "reason": "Оценка кальцификации сосудов при ХБП С3–С5Д — один из методов (ДС БЦА).",
+      "sourceId": "kr_ckd_2024"
+    },
+    {
+      "id": "HF-ANNUAL-001",
+      "diagnosisId": "heart_failure",
+      "stageIds": [
+        "annual_control"
+      ],
+      "examinationIds": [
+        "lab_cbc",
+        "lab_potassium",
+        "lab_sodium",
+        "lab_creatinine_egfr",
+        "lab_lipid_profile",
+        "ecg",
+        "echo"
+      ],
+      "status": "mandatory_for_stage",
+      "autoSelect": true,
+      "condition": "established_or_suspected_hf",
+      "reason": "Ежегодный диспансерный контроль ХСН: ОАК, электролиты, СКФ, липиды, ЭКГ, ЭхоКГ.",
+      "sourceId": "kr_hf_2024"
+    },
+    {
+      "id": "HF-BNP-ANNUAL-001",
+      "diagnosisId": "heart_failure",
+      "stageIds": [
+        "annual_control"
+      ],
+      "examinationId": "lab_ntprobnp",
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": "established_or_suspected_hf",
+      "reason": "Контроль натрийуретических пептидов — по показаниям (обычно не чаще 1 раза в 2 года).",
+      "sourceId": "kr_hf_2024"
+    },
+    {
+      "id": "HF-FOLLOWUP-LABS-001",
+      "diagnosisId": "heart_failure",
+      "stageIds": [
+        "follow_up"
+      ],
+      "examinationIds": [
+        "lab_potassium",
+        "lab_sodium",
+        "lab_creatinine_egfr"
+      ],
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": "established_or_suspected_hf",
+      "reason": "Контроль калия, натрия и функции почек при титрации диуретиков или изменении терапии.",
+      "sourceId": "kr_hf_2024"
+    },
+    {
+      "id": "CKD-NEPHRO-001",
+      "diagnosisId": "ckd",
+      "stageIds": [
+        "primary_visit",
+        "annual_control"
+      ],
+      "examinationId": "nephrologist",
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": null,
+      "reason": "Консультация нефролога при СКФ <30 мл/мин/1,73 м², альбуминурии А3 или выраженной протеинурии / быстром прогрессировании ХБП (маршрутизация).",
+      "sourceId": "kr_ckd_2024"
+    },
+    {
+      "id": "IHD-EXERCISE-001",
+      "diagnosisId": "stable_ihd",
+      "stageIds": [
+        "primary_visit"
+      ],
+      "examinationId": "stress_test",
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": null,
+      "reason": "Нагрузочный тест (ВЭМ/тредмил) при ПТВ 5–15 % и возможности проведения ЭКГ-нагрузки; функциональный метод диагностики ишемии.",
+      "sourceId": "kr_stable_ihd_2024"
+    },
+    {
+      "id": "AF-PREPROC-001",
+      "diagnosisId": "atrial_fibrillation",
+      "stageIds": [
+        "primary_visit",
+        "annual_control"
+      ],
+      "examinationId": "transesophageal_echo",
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": null,
+      "reason": "ЧП-ЭхоКГ перед кардиоверсией/аблацией или для исключения тромба левого предсердия (вне клиники — направление).",
+      "sourceId": "kr_af_2025"
+    },
+    {
+      "id": "AF-THYROID-001",
+      "diagnosisId": "atrial_fibrillation",
+      "stageIds": [
+        "follow_up",
+        "annual_control"
+      ],
+      "examinationIds": [
+        "lab_tsh",
+        "lab_free_t4"
+      ],
+      "status": "indicated_if_condition",
+      "autoSelect": false,
+      "condition": null,
+      "reason": "Контроль функции щитовидной железы: ТТГ и свободный Т4 при приёме амиодарона (обычно каждые 6 мес), изменении течения аритмии или тиреоидной патологии.",
+      "sourceId": "kr_af_2025"
+    }
+  ],
+  "suppressionRules": [
+    {
+      "id": "SUP-ECHO-HF-001",
+      "when": "established_hf_initial_assessment",
+      "suppressRuleIds": [
+        "AG-ECHO-001"
+      ],
+      "keepExaminationId": "echo",
+      "effect": "merge_and_raise_status"
+    },
+    {
+      "id": "SUP-ECHO-AF-001",
+      "when": "established_af",
+      "suppressConditionalDuplicates": true,
+      "keepExaminationId": "echo",
+      "effect": "merge_and_raise_status"
+    },
+    {
+      "id": "SUP-ECHO-CKD-001",
+      "when": "ckd_stage_is_C3_or_higher",
+      "suppressLowerPriorityEchoRules": true,
+      "keepExaminationId": "echo",
+      "effect": "merge_and_raise_status"
+    },
+    {
+      "id": "SUP-DOAC-INR-001",
+      "when": "antithrombotic_status_is_doac",
+      "suppressRuleIds": [
+        "AF-WARFARIN-INR-001"
+      ],
+      "effect": "do_not_add"
+    },
+    {
+      "id": "SUP-DIAGNOSTIC-DM-001",
+      "when": "diabetes_status_is_established",
+      "suppressRuleIds": [
+        "DM-DIAG-GLUC-001",
+        "DM-DIAG-HBA1C-001",
+        "DM-DIAG-OGTT-001"
+      ],
+      "effect": "do_not_add"
+    },
+    {
+      "id": "SUP-TROPONIN-001",
+      "when": "acute_coronary_syndrome_suspected_is_false",
+      "suppressRuleIds": [
+        "IHD-TROPONIN-001"
+      ],
+      "effect": "do_not_add"
+    }
+  ],
+  "outputRules": {
+    "deduplicateBy": "mergeGroup",
+    "preserveAllReasons": true,
+    "raiseToHighestStatus": true,
+    "alternativeGroupsRequireOneChoice": [
+      "natriuretic_peptide"
+    ],
+    "categoriesOrder": [
+      "lab",
+      "instrumental",
+      "consultation",
+      "exam",
+      "calculation"
+    ],
+    "externalRecommendationPrefix": "Также рекомендовано: ",
+    "manualUncheckWarning": false,
+    "manualUncheckReasonRequired": false
+  },
+  "knownOpenQuestions": [
+    "Подтвердить доступность NT-proBNP в клинике.",
+    "Подтвердить фактический маршрут нагрузочных тестов и рентгенографии грудной клетки.",
+    "Пороговые условия ПТВ ИБС и выбор одного специфического метода требуют отдельного интерфейсного выбора.",
+    "Сверить точные страницы и дословные цитаты источников перед публикацией в ДМС-ориентированном интерфейсе.",
+    "Уточнить критерии маршрутизации к нефрологу при ХБП по локальному порядку клиники.",
+    "Уточнить состав локальных биохимических панелей и возможность выбора отдельных компонентов."
+  ]
+}

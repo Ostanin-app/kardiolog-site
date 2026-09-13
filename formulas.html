@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>База формулировок — Кардио-справочник</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+  /* База формулировок — адаптация под стиль «Сайт КР» (синий #0b5c8a) */
+  .fb-toolbar{
+    display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:14px 0 16px;
+  }
+  .fb-search{
+    flex:1 1 240px;min-width:180px;padding:9px 12px;border:1.5px solid var(--border);
+    border-radius:9px;font-size:14px;background:var(--surface);color:var(--text);font-family:var(--font);
+  }
+  .fb-search:focus{outline:none;border-color:var(--primary);}
+  .fb-btn{
+    font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;
+    border:1.5px solid var(--border);background:var(--surface);color:var(--text);
+    padding:9px 14px;border-radius:9px;transition:background .12s,border-color .12s,color .12s;
+  }
+  .fb-btn:hover{border-color:var(--primary);color:var(--primary);}
+  .fb-btn.primary{background:var(--primary);color:#fff;border-color:var(--primary);}
+  .fb-btn.primary:hover{background:var(--primary-2);color:#fff;}
+  .fb-btn.ghost{background:transparent;}
+  .fb-btn.danger{color:var(--red-deep);border-color:var(--red);}
+  .fb-btn.danger:hover{background:var(--red-soft);color:var(--red-deep);}
+
+  .fb-layout{display:flex;align-items:flex-start;gap:0;}
+  .fb-nav{
+    width:240px;flex:0 0 240px;position:sticky;top:90px;align-self:flex-start;
+    padding:4px 12px 40px 0;height:calc(100vh - 90px);overflow:auto;
+  }
+  .fb-nav .cat{
+    display:flex;justify-content:space-between;align-items:center;gap:6px;
+    padding:9px 12px;border-radius:9px;cursor:pointer;margin-bottom:2px;font-size:14px;color:var(--text);
+  }
+  .fb-nav .cat:hover{background:var(--primary-soft);}
+  .fb-nav .cat.active{background:var(--primary-soft);color:var(--primary);font-weight:600;}
+  .fb-nav .cat .cnt{color:var(--muted);font-size:12px;}
+  .fb-nav .addcat{margin-top:8px;width:100%;text-align:left;color:var(--muted);background:none;border:none;font-family:var(--font);font-size:13px;font-weight:600;cursor:pointer;padding:9px 12px;}
+  .fb-nav .addcat:hover{color:var(--primary);}
+
+  .fb-main{padding:0 4px 60px;flex:1 1 auto;min-width:0;}
+  .fb-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:8px;}
+  .fb-bar h2{font-size:19px;margin:0;color:var(--text);}
+  .fb-hint{color:var(--muted);font-size:13px;margin:0 0 14px;}
+
+  .fb-items{display:flex;flex-direction:column;gap:8px;}
+  .fb-item{
+    position:relative;display:flex;align-items:stretch;gap:0;
+    background:var(--surface);border:1.5px solid var(--border);border-radius:var(--r);
+    padding:0;cursor:pointer;overflow:hidden;transition:border-color .12s,background .12s,box-shadow .12s;
+  }
+  .fb-item:hover{border-color:var(--primary);box-shadow:var(--shadow-1);}
+  .fb-item.selected{background:var(--primary-soft);border-color:var(--primary);}
+  .fb-item.copied{border-color:var(--green);background:var(--green-soft);}
+  .fb-item .pick{
+    flex:0 0 26px;align-self:stretch;cursor:pointer;background:transparent;
+    border-right:1px solid var(--border);transition:background .12s;
+  }
+  .fb-item .pick:hover{background:var(--primary-soft);}
+  .fb-item.selected .pick{background:var(--primary);}
+  .fb-item .body{flex:1 1 auto;padding:11px 46px 11px 14px;min-width:0;display:flex;flex-direction:column;}
+  .fb-item .toprow{display:flex;align-items:flex-start;gap:8px;}
+  .fb-item .fav{
+    flex:0 0 auto;font-size:17px;line-height:1;background:none;border:none;padding:0;cursor:pointer;color:var(--muted);
+  }
+  .fb-item .fav.on{color:var(--orange);}
+  .fb-item .txt{white-space:pre-wrap;word-break:break-word;font-size:14px;line-height:1.5;flex:1 1 auto;}
+  .fb-item .fb-title{font-weight:700;font-size:13.5px;color:var(--primary);letter-spacing:.2px;margin-bottom:4px;}
+  .fb-item .txt.clamp{max-height:4.6em;overflow:hidden;}
+  .fb-expand{
+    display:flex;justify-content:center;align-items:flex-end;width:100%;flex:1 1 auto;margin-top:4px;cursor:pointer;
+  }
+  .fb-expand .chev{
+    width:11px;height:11px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);
+    transform:rotate(45deg);transition:transform .18s, border-color .12s;
+  }
+  .fb-expand.open .chev{ transform:rotate(225deg); }
+  .fb-expand:hover .chev{ border-color:var(--primary); }
+  .fb-item .expand-btn{margin-top:4px;font-size:13px;color:var(--primary);background:none;border:none;padding:0;cursor:pointer;font-family:var(--font);font-weight:600;}
+  .fb-item .expand-btn:hover{text-decoration:underline;}
+  .fb-item .acts{position:absolute;top:6px;right:6px;display:flex;gap:4px;opacity:0;transition:opacity .12s;}
+  .fb-item:hover .acts{opacity:1;}
+  .fb-item .acts button{border:1px solid var(--border);background:rgba(255,255,255,.92);padding:3px 8px;border-radius:6px;font-size:13px;line-height:1.2;cursor:pointer;}
+  .fb-item .acts button:hover{border-color:var(--primary);}
+  .fb-item .acts .del:hover{border-color:var(--red);color:var(--red-deep);}
+  .fb-empty{color:var(--muted);padding:22px;border:1px dashed var(--border);border-radius:var(--r);text-align:center;}
+
+  /* панель сборки */
+  .fb-collect{
+    position:fixed;left:0;right:0;bottom:0;z-index:40;display:none;align-items:center;gap:12px;
+    background:var(--surface);border-top:1.5px solid var(--border);padding:12px 22px;
+    box-shadow:0 -4px 16px rgba(24,28,51,.10);
+  }
+  .fb-collect.show{display:flex;}
+  .fb-collect .grow{display:flex;gap:8px;margin-left:12px;}
+
+  /* модалка */
+  .fb-overlay{position:fixed;inset:0;background:rgba(20,24,35,.45);display:none;align-items:center;justify-content:center;z-index:50;padding:16px;}
+  .fb-overlay.show{display:flex;}
+  .fb-modal{background:var(--surface);border-radius:var(--r-lg);padding:20px;width:100%;max-width:560px;box-shadow:var(--shadow-2);}
+  .fb-modal h3{margin:0 0 12px;font-size:17px;color:var(--primary);}
+  .fb-modal label{display:block;font-size:13px;color:var(--muted);margin:10px 0 4px;}
+  .fb-modal textarea,.fb-modal select{width:100%;padding:10px 12px;border:1.5px solid var(--border);border-radius:9px;font:inherit;background:var(--surface-2);resize:vertical;font-family:var(--font);}
+  .fb-modal textarea{min-height:120px;}
+  .fb-modal .row{display:flex;gap:8px;justify-content:flex-end;margin-top:16px;flex-wrap:wrap;}
+  #fbToast{position:fixed;left:50%;bottom:74px;transform:translateX(-50%);background:var(--text);color:#fff;padding:9px 16px;border-radius:20px;font-size:13.5px;opacity:0;pointer-events:none;transition:.2s;z-index:80;}
+  #fbToast.show{opacity:.95;}
+
+  /* фильтр-чипы по тегам */
+  .fb-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;}
+  .fb-chip{
+    font-family:var(--font);font-size:12.5px;font-weight:600;cursor:pointer;
+    border:1.5px solid var(--border);background:var(--surface);color:var(--text);
+    padding:5px 12px;border-radius:20px;transition:background .12s,border-color .12s,color .12s;
+  }
+  .fb-chip:hover{border-color:var(--primary);color:var(--primary);}
+  .fb-chip.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+  .fb-chip .n{opacity:.6;margin-left:5px;font-weight:500;}
+
+  /* состояния перетаскивания карточки */
+  .fb-item.dragging{opacity:.45;}
+  .fb-item.drop-line{box-shadow:inset 0 -3px 0 var(--primary);}
+  .fb-item.drop-line-top{box-shadow:inset 0 3px 0 var(--primary);}
+  .fb-nav .cat.dragging{opacity:.45;}
+  .fb-nav .cat.drop-line-cat{box-shadow:inset 0 -3px 0 var(--primary);}
+  .fb-nav .cat.drop-line-cat-top{box-shadow:inset 0 3px 0 var(--primary);}
+
+  @media (max-width:760px){
+    .fb-nav{position:static;width:100%;height:auto;padding:0 0 10px;}
+    .fb-layout{flex-direction:column;}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="topnav">
+    <span class="brand">❤️ Кардио-справочник</span>
+    <div class="nav-links">
+      <a href="index.html">Главная</a>
+      <a href="planner.html">План обследований</a>
+      <a href="ag.html">АГ</a>
+      <a href="formulas.html" class="active">Формулировки</a>
+      <a href="ecg.html">ЭКГ</a>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="page-title">База формулировок</div>
+  <div class="page-sub">Готовые тексты для записи осмотра, справок и рекомендаций пациенту. Клик — копировать. Левая полоса — выбрать для сборки блока.</div>
+
+  <div class="fb-toolbar">
+    <input id="fbSearch" class="fb-search" placeholder="Поиск… (клавиша «/») · Enter — копировать первый результат" autocomplete="off">
+    <button class="fb-btn primary" id="btnAdd">+ Добавить фразу</button>
+    <button class="fb-btn" id="btnExportMd">Экспорт в MD</button>
+    <button class="fb-btn" id="btnExportJson">Экспорт JSON</button>
+    <button class="fb-btn" id="btnImport">Импорт JSON</button>
+    <button class="fb-btn danger ghost" id="btnClear">Очистить фразы</button>
+    <input type="file" id="fileInput" accept=".json" style="display:none">
+  </div>
+
+  <div class="fb-layout">
+    <nav class="fb-nav" id="fbNav"></nav>
+    <main class="fb-main">
+      <div class="fb-bar">
+        <h2 id="fbCatTitle">Все фразы</h2>
+        <div id="fbCatCount" class="fb-hint"></div>
+      </div>
+      <p class="fb-hint">Кликните по фразе — скопируется. ★ — добавить в «Частые», левая полоса плашки — выбрать для сборки блока. «Изменить» и «Удалить» — при наведении в правом верхнем углу. Ctrl+Enter — собрать выбранное, Esc — сбросить выбор.</p>
+      <div class="fb-items" id="fbItems"></div>
+    </main>
+  </div>
+
+</div>
+
+<div class="fb-collect" id="fbCollect">
+  <span id="fbCollectInfo">Выбрано: 0</span>
+  <div class="grow">
+    <button class="fb-btn ghost" id="btnClearSel">Сбросить</button>
+    <button class="fb-btn primary" id="btnCollect">Собрать блок (0)</button>
+  </div>
+</div>
+
+<div class="fb-overlay" id="fbOverlay">
+  <div class="fb-modal">
+    <h3 id="fbModalTitle">Добавить фразу</h3>
+    <label for="fTitle">Заголовок (короткая метка, не копируется)</label>
+    <input id="fTitle" class="fb-search" style="flex:1 1 auto;" placeholder="напр.: Бисопролол / Отказ от госпитализации">
+    <label for="fText">Текст формулировки</label>
+    <textarea id="fText" placeholder="Например: Состояние удовлетворительное. Кожные покровы обычной окраски…"></textarea>
+    <label for="fTags">Теги (через запятую, напр.: антикоагулянт, МРА)</label>
+    <input id="fTags" class="fb-search" style="flex:1 1 auto;" placeholder="антикоагулянт, статины">
+    <label for="fCat">Категория</label>
+    <select id="fCat"></select>
+    <div class="row">
+      <button class="fb-btn ghost" id="modalCancel">Отмена</button>
+      <button class="fb-btn primary" id="modalSave">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<div id="fbToast"></div>
+
+<script>
+"use strict";
+const STORE_KEY = "formulaBankV3";
+
+const SEED = {
+  categories: [
+    { id:"complaints", name:"Жалобы", items:[] },
+    { id:"history", name:"Анамнез", items:[] },
+    { id:"objective", name:"Объективный осмотр", items:[] },
+    { id:"diagnoses", name:"Диагнозы (МКБ-10)", items:[] },
+    { id:"recommendations", name:"Рекомендации пациенту", items:[
+      { id:"rec1", fav:false, text:"Амбулаторное лечение по месту жительства в поликлинике. Наблюдение терапевта, кардиолога. \nКонтроль артериального давления (АД), частоты сердечных сокращений (ЧСС) и пульса утром и вечером с занесением записей в дневник. Целевой уровень АД – 120-130/<80 мм рт.ст., ЧСС – 55-60 ударов в минуту в покое (на фоне приема препаратов)." },
+      { id:"rec2", fav:false, text:"Диета с ограничением соли и жидкости. Снижение потребления жиров животного происхождения (жирное мясо, субпродукты, сливочное масло, жирные молочные продукты, жирные сорта сыра, сдобная выпечка и др).\nКонтроль массы тела с ведением дневника. Снижение массы тела. Поддержание целевого значения индекса массы тела (ИМТ) 20-25 кг/м2. Расчёт ИМТ: масса тела (кг) / (рост (м) × рост (м)). Отказ от курения, употребления алкоголя." },
+      { id:"rec3", fav:false, text:"ЭКГ в динамике. ЭХО-КГ, ХМ-ЭКГ, СМАД, УЗДС МАГ амбулаторно." },
+      { id:"rec4", fav:false, text:"ФГДС с последующей консультацией гастроэнтеролога." },
+      { id:"rec5", fav:false, text:"УЗИ щитовидной железы, анализ крови на ТТГ, Т3, Т4, АТкТПО с последующей консультацией эндокринолога." },
+      { id:"rec6", fav:false, text:"Контроль ОАК, ОАМ, глюкозы крови, АЛТ, АСТ, креатинина (с расчетом СКФ по формуле CKD-EPI), калия, натрия, достижение и поддержание целевых уровней липидограммы (общий холестерин, ЛПНП, ЛПВП, триглицериды) амбулаторно по месту жительства." },
+      { id:"rec7", fav:false, text:"Рекомендовано определение Лп(а) в крови хотя бы раз в жизни с целью выявления наследственно обусловленного очень высокого уровня Лп(а) (≥180 мг/дл или ≥430 ммоль/л), а следовательно, и выявления высокого риска атеросклеротических сердечно-сосудистых заболеваний." }
+    ]},
+    { id:"medications", name:"Лекарственная терапия", items:[
+      { id:"med1", fav:false, tags:["Антигипертензивные","Ритм"], text:"Метопролола сукцинат 50 мг по 1 таб. утром в 08:00 или Бисопролол 5 мг по 1 таб. утром в 08:00 под контролем АД, ЧСС. Коррекция доз у терапевта в поликлинике по месту жительства для поддержания целевого уровня ЧСС и пульса." },
+      { id:"med2", fav:false, tags:["Ритм"], text:"Амиодарон 200 мг по 1 таб. 3 раза в сутки (в 8:00, 15:00 и 22:00) - 7 дней,\n=> затем по 1 таб. 2 раза в сутки (в 8:00 и 20:00) - 7 дней,\n=> затем по 1 таб. утром в 8:00 по схеме: 5 дней прием (Пн-Пт), 2 дня перерыв (Сб-Вс).\nВо время лечения амиодароном регулярно контролировать ЭКГ (каждые 3 месяца), АЛТ, АСТ. Каждые 6 месяцев - рентгенологическое исследование легких. Во время лечения амиодароном и в течение нескольких месяцев после его прекращения регулярно обследоваться на предмет выявления клинических или лабораторных признаков изменения функции щитовидной железы. При подозрении на нарушение функции щитовидной железы необходимо провести определение ТТГ в сыворотке крови. Также, время лечения избегать избыточного воздействия прямых солнечных лучей. При отмене препарата возможны рецидивы нарушений ритма." },
+      { id:"med3", fav:false, tags:["Ритм"], text:"Соталол 80 мг по 1 таб. 3 раза в сутки под контролем ЧСС, пульса." },
+      { id:"med4", fav:false, tags:["Ритм"], text:"Ивабрадин 5 мг по 1/2-1 таб. в 08:00 и 20:00 под контролем ЧСС, пульса. Коррекция доз у терапевта в поликлинике." },
+      { id:"med5", fav:false, tags:["Ритм"], text:"Этацизин 50 мг 1 таб 3 раза. При недостаточном клиническом эффекте дозу увеличивают (под обязательным контролем ЭКГ) до 50 мг 4 раза/сут или 100 мг 3 раза/сут (коррекция доз у терапевта/кардиолога в поликлинике)." },
+      { id:"med6", fav:false, tags:["Антигипертензивные"], text:"Лизиноприл 10 мг по 1 таб. вечером в 20:00 под контролем АД. Коррекция доз у терапевта в поликлинике по месту жительства для поддержания целевого уровня АД." },
+      { id:"med7", fav:false, tags:["Антигипертензивные"], text:"Лозартан 25 мг по 1 таб. вечером в 20:00 под контролем АД. Коррекция доз у терапевта в поликлинике по месту жительства для поддержания целевого уровня АД." },
+      { id:"med8", fav:false, tags:["Антигипертензивные","Диуретики"], text:"Индапамид 2,5 мг по 1 таб. утром в 08:00 под контролем АД." },
+      { id:"med9", fav:false, tags:["Антигипертензивные"], text:"Амлодипин 5 мг по 1 таб. вечером в 20:00 под контролем АД. Коррекция доз у терапевта в поликлинике по месту жительства для поддержания целевого уровня АД." },
+      { id:"med10", fav:false, tags:["Антигипертензивные","Диуретики","АМКР"], text:"Эплеренон 25 мг по 1 таб. утром в 08:00 или Спироналактон 25 мг по 1 таб. утром в 08:00 под контролем креатинина, калия крови, СКФ" },
+      { id:"med11", fav:false, tags:["СГЛТ2-ингибиторы","Сахароснижающие"], text:"Дапаглифлозин 10 мг по 1 таб. утром в 8:00, длительно." },
+      { id:"med12", fav:false, tags:["Антигипертензивные","Диуретики"], text:"Торасемид 5 мг по 1 таб. утром в 08:00 под контролем веса (с ведением дневника). Коррекция доз у терапевта." },
+      { id:"med13", fav:false, tags:["Антиагреганты"], text:"Ацетилсалициловая кислота 75-100 мг по 1 таб. вечером в 20:00, длительно." },
+      { id:"med14", fav:false, tags:["Антиагреганты"], text:"Клопидогрел 75 мг по 1 таб. вечером в 20:00 / Тикагрелор 90 мг по 1 таб 2 р/сут в 8:00 и 20:00. Принимать до 1 года после установки стента, без отмены и перерывов в приеме препарата!!! При несвоевременной отмене приема препарата возможен тромбоз стента и инфаркт миокарда!" },
+      { id:"med15", fav:false, tags:["Антикоагулянты"], text:"Ривароксабан 20 мг по 1 таб в сутки в 20:00 ИЛИ Апиксабан 5 мг по 1 таб 2 раза в сутки в 8:00 и 20:00 ИЛИ Дабигатрана этексилат 150 мг по 1 таб. 2 р/сут. Контроль креатинина с расчетом клиренса креатинина в поликлинике по месту жительства. При самостоятельной отмене препарата возможны тромбоэмболии (в т.ч. инсульт)!" },
+      { id:"med16", fav:false, tags:["Антикоагулянты"], text:"Варфарин 2,5 мг по 2 таб. вечером под контролем МНО (целевой уровень МНО от 2,0 до 3,0). Необходимо придерживаться одного и того же режима питания. Соблюдение диеты со стабильным содержанием продуктов, богатых витамином К (зелёные овощи, белокочанная капуста, говяжья печень, горчица, морские водоросли, зелень, чечевица, цикорий, соевые бобы), отказаться от употребления зеленого чая. Использование препаратов, влияющих на эффективность варфарина, требует более частого контроля МНО и при необходимости коррекции дозы варфарина. Избегать травмоопасных видов деятельности. При передозировке варфарина возможны кровотечения. Риск кровотечения увеличивается при МНО > 4,5. При появлении кровоточивости (кровоизлияния, кровоточивость десен, черный стул, темная (красная) моча, маточные кровотечения) срочно обратиться к врачу и сдать анализ крови на МНО. Первые 3 месяца контроль МНО еженедельно, затем не реже 1 раза в месяц пожизненно." },
+      { id:"med17", fav:false, tags:["Статины"], text:"Аторвастатин 80 мг по 1 таб. в 20:00 или Розувастатин 40 мг по 1 таб. в 20:00, длительно без перерыва под контролем анализов (общий холестерин, ЛПНП, ЛПВП, триглицериды, АЛТ, АСТ, КФК). Контроль крови через 4-6 недель после начала приема или изменения дозы препарата, затем через 6 мес., далее раз в 12 месяцев. Коррекция доз в поликлинике по месту жительства до достижения целевого уровня ЛПНП. Целевой уровень ХС-ЛПНП менее 1,4 ммоль/л и снижение ХС-ЛПНП не менее чем на 50% от исходного уровня. В случае превышения верхней границы нормы АСТ, АЛТ в 3 раза, или КФК в 5 раз – консультация терапевта или кардиолога для решения вопроса о коррекции дозы статинов, с последующим повторным постепенным увеличением дозы после нормализации уровня ферментов, при необходимости смена препарата.\nПри недостижении целевых уровней ЛПНП на фоне приема максимальных доз статинов добавить Эзетемиб 10 мг по 1 таб. вечером в 20:00." },
+      { id:"med18", fav:false, tags:["Другое"], text:"Препараты калия: Калий-Нормин по 1 таб. 2 раза в день после еды. Контроль калия и магния крови в поликлинике по месту жительства через 3 недели. При появлении болей в животе, тошноты прекратить прием и обратиться к врачу." },
+      { id:"med19", fav:false, tags:["Другое"], text:"Препараты калия/магния: Панангин (Аспаркам) по 1-2 таб. 3 р/сут после еды. Контроль калия и магния крови в поликлинике по месту жительства через 3 недели." },
+      { id:"med20", fav:false, tags:["ИПП"], text:"Рабепразол 20 мг (или Омепразол 20 мг) по 1 капсуле 2 раза в день за 30 минут до еды; отдельно от приема других медикаментов, пищи, запивая негазированной водой. Принимать курсами по 2 месяца прием, 2 недели перерыв (согласовать с гастроэнтерологом)." },
+      { id:"med21", fav:false, tags:["Нитраты"], text:"Нитраты по потребности (нитроспрей). Применять в положении сидя или лежа под контролем АД не ниже 100 мм рт.ст. При приступе стенокардии применять 1-2 дозы под язык с последующим контролем АД. При необходимости можно применить повторно через 5 минут под контролем АД." },
+      { id:"med22", fav:false, tags:["Ритм"], title:"Дигоксин", text:"Дигоксин 0,25 мг по 1/2 таб. утром в 08:00 под контролем ЧСС, ЭКГ (интервал PQ, признаки гликозидной интоксикации), калия крови. Коррекция дозы у терапевта/кардиолога. При СКФ < 60 мл/мин/1,73м² доза снижается. При появлении тошноты, нарушения зрения, перебоев в работе сердца — немедленно прекратить приём и обратиться к врачу." },
+      { id:"med23", fav:false, tags:["Сахароснижающие"], title:"Метформин", text:"Метформин 500 мг по 1 таб. 2 раза в сутки во время еды (в 08:00 и 20:00). При недостаточном контроле гликемии — увеличение дозы до 1000 мг 2 раза в сутки (коррекция с эндокринологом). Контроль креатинина с расчётом СКФ не реже 1 раза в год. При СКФ < 30 мл/мин/1,73м² — отмена. При планируемом в/в введении контраста — отмена за 48 ч до и возобновление через 48 ч после." },
+      { id:"med24", fav:false, tags:["Нитраты"], title:"Изосорбида мононитрат 20 мг", text:"Изосорбида мононитрат 20 мг по 1 таб. 2 раза в сутки (в 08:00 и 14:00). Обязательный безнитратный период не менее 8–12 часов (обычно с 16:00 до 08:00 следующего дня). При приступе стенокардии дополнительно нитроспрей под язык. Не сочетать с ингибиторами ФДЭ-5 (силденафил, тадалафил, варденафил)." },
+      { id:"med25", fav:false, tags:["Нитраты"], title:"Изосорбида мононитрат 40 мг (пролонг.)", text:"Изосорбида мононитрат 40 мг (пролонгированная форма) по 1 таб. утром в 08:00. Обязательный безнитратный период не менее 8–12 часов (вечер и ночь без препарата). При приступе стенокардии дополнительно нитроспрей под язык. Не сочетать с ингибиторами ФДЭ-5 (силденафил, тадалафил, варденафил)." },
+      { id:"med26", fav:false, tags:["Нитраты"], title:"Изосорбида динитрат 10 мг", text:"Изосорбида динитрат 10 мг по 1 таб. 3 раза в сутки (в 08:00, 12:00, 16:00) либо ситуационно — за 10–15 минут до планируемой физической нагрузки. Обязательный безнитратный период не менее 8–12 часов (вечер и ночь без препарата). При приступе стенокардии дополнительно нитроспрей под язык. Не сочетать с ингибиторами ФДЭ-5 (силденафил, тадалафил, варденафил)." },
+      { id:"med27", fav:false, tags:["Антигипертензивные","Ритм"], title:"Карведилол", text:"Карведилол 12,5 мг по 1/2 таб. 2 раза в сутки (в 08:00 и 20:00). Титрация каждые 2 недели до целевой дозы (обычно 12,5–25 мг 2 раза в сутки) под контролем АД, ЧСС, веса, отёков. Начало терапии — только со стабильного состояния (без признаков декомпенсации ХСН). Коррекция дозы — с кардиологом." },
+      { id:"med28", fav:false, tags:["Антигипертензивные"], title:"Моксонидин (плановый приём)", text:"Моксонидин 0,2 мг по 1 таб. утром в 08:00 под контролем АД. При недостаточном эффекте — увеличение до 0,4 мг (0,2 мг утром и 0,2 мг вечером). Не отменять резко. Коррекция дозы — с терапевтом/кардиологом." },
+      { id:"med29", fav:false, tags:["Антигипертензивные"], title:"Моксонидин (экстренная самопомощь)", text:"При резком повышении АД (неосложнённый гипертонический криз) — моксонидин 0,4 мг однократно под язык, в положении сидя или лёжа, под контролем АД. Если через 30–40 минут АД не снизилось или появились боли в груди, одышка, слабость в конечностях, нарушение речи — вызвать скорую помощь. Максимальная суточная доза моксонидина — 0,6 мг (например, 0,4 мг + 0,2 мг)." }
+    ]},
+    { id:"legal", name:"Юридическая защита / для истории болезни", items:[
+      { id:"close1", fav:false, text:"Данных за ОКС и острые нарушения ритма на момент осмотра нет. При ухудшении состояния повторно обратиться за медицинской помощью." }
+    ]}
+  ]
+};
+
+const LEGAL_MERGE = [
+  { id:"leg_basic", text:"Рекомендации по образу жизни, медикаментозному лечению и самоконтролю разъяснены в доступной форме, в т. ч. ожидаемые эффекты и возможные побочные действия назначенных препаратов. Вопросов у пациента не возникло. Рекомендации выданы в письменной форме. Разъяснены признаки ухудшения состояния, при которых необходимо экстренное обращение за медицинской помощью, а также сроки и порядок планового наблюдения." },
+  { id:"leg_acoag", text:"Разъяснены риски кровотечений на фоне антикоагулянтной терапии, признаки значимого кровотечения (гематурия, мелена, длительно не останавливающееся кровотечение, внезапная сильная головная боль), необходимость немедленного обращения при их появлении. Разъяснена недопустимость самостоятельной отмены или изменения дозы антикоагулянта." },
+  { id:"leg_refuse", text:"Пациенту разъяснены показания к [госпитализации / КАГ / Холтер / ЭхоКГ], ожидаемые риски при отказе, в т. ч. риск [прогрессирования заболевания / жизнеугрожающих осложнений]. От предложенного [обследования / госпитализации] пациент отказался, о чём информирован в письменной форме. Подпись пациента: _______." },
+  { id:"leg_invas", text:"Разъяснены показания к [коронарографии / РЧА / имплантации ЭКС], суть процедуры, основные риски и альтернативные варианты лечения. Информированное добровольное согласие будет оформлено в стационаре." },
+  { id:"leg_preg", text:"Пациентке разъяснено тератогенное действие назначенных препаратов (иАПФ/БРА, статины, антикоагулянты — варфарин, антагонисты альдостерона). Рекомендована надёжная контрацепция на период терапии. При планировании беременности или задержке менструации — немедленное обращение для коррекции терапии." },
+  { id:"leg_emerg", text:"В ходе приёма [время] у пациента возник(ла) [гипертонический криз с АД 220/120 / пароксизм фибрилляции предсердий с ЧСС 150 / ангинозный приступ]. Оказана неотложная помощь: [перечислить]. На фоне терапии состояние стабилизировалось: АД ___, ЧСС ___. Вызвана бригада СМП (время вызова ___, время прибытия ___). Пациент передан бригаде СМП / Пациент транспортирован в [стационар] / От госпитализации отказался (подпись)." },
+  { id:"leg_urgent", text:"Обоснована и разъяснена необходимость выполнения [ЭхоКГ / Холтер-мониторинга / СМАД / МСКТ коронарных артерий / тредмил-теста] в [срочном порядке — в течение 3 дней / плановом порядке — в течение 2 недель]. Разъяснено, что отсрочка обследования может привести к [прогрессированию заболевания / пропуску жизнеугрожающей патологии]." },
+  { id:"leg_refer", text:"В связи с [декомпенсацией СД / снижением СКФ < 30 / подозрением на патологию щитовидной железы / анемией неясного генеза] пациент направлен к [эндокринологу / нефрологу / гематологу] для [уточнения диагноза / коррекции терапии]. Направление выдано на руки." },
+  { id:"leg_limit", text:"Разъяснены ограничения, связанные с диагнозом: [запрет на управление автотранспортом до стабилизации ритма / ограничение физических нагрузок до субмаксимальных / противопоказание к работе на высоте и с движущимися механизмами]. Рекомендовано воздержаться от [вождения / интенсивных физических нагрузок] до [контрольного осмотра / имплантации ЭКС / стабилизации состояния]." },
+  { id:"leg_cog", text:"В связи с когнитивными нарушениями у пациента рекомендации по лечению и самоконтролю дополнительно разъяснены сопровождающему лицу ([ФИО, степень родства]). Сопровождающее лицо подтвердило понимание рекомендаций, вопросов не возникло." }
+];
+
+// авто-заголовки для существующих фраз (по id) — добавляются один раз, ручные правки заголовка не затирают
+const AUTO_TITLES = {
+  rec1:"АД и пульс: самоконтроль", rec2:"Диета, вес, ИМТ, отказ от вредного", rec3:"ЭКГ, ЭхоКГ, ХМ, СМАД, УЗДС",
+  rec4:"ФГДС + гастроэнтеролог", rec5:"Щитовидная железа + эндокринолог", rec6:"ОАК/ОАМ, липиды, креатинин, СКФ", rec7:"Лп(а) однократно",
+  med1:"Бета-блокатор (метопролол/бисопролол)", med2:"Амиодарон (схема)", med3:"Соталол", med4:"Ивабрадин", med5:"Этацизин",
+  med6:"Лизиноприл (иАПФ)", med7:"Лозартан (БРА)", med8:"Индапамид", med9:"Амлодипин", med10:"Эплеренон/Спиронолактон (МРА)",
+  med11:"Дапаглифлозин (СГЛТ2)", med12:"Торасемид", med13:"АСК (аспирин)", med14:"Клопидогрел/тикагрелор (DAPT)", med15:"НОАК (ривароксабан/апиксабан/дабигатран)",
+  med16:"Варфарин (МНО)", med17:"Статины (аторвастатин/розувастатин)", med18:"Калий-Нормин", med19:"Панангин/Аспаркам", med20:"ИПП (рабепразол/омепразол)", med21:"Нитраты по потребности",
+  close1:"Заключение: без ОКС/острых нарушений ритма",
+  leg_basic:"Базовое разъяснение рекомендаций", leg_acoag:"Антикоагулянты: риск кровотечения", leg_refuse:"Отказ от госпитализации/обследования",
+  leg_invas:"Направление на инвазивное (КАГ/РЧА/ЭКС)", leg_preg:"Беременность и тератогенность", leg_emerg:"Экстренная ситуация на приёме",
+  leg_urgent:"Срочное обследование с дедлайном", leg_refer:"Направление к смежному специалисту", leg_limit:"Ограничения (вождение/нагрузки)", leg_cog:"Разъяснение сопровождающему (когнитивные нарушения)"
+};
+
+let data = load();
+let currentCat = "all";
+let activeTag = null;
+let searchTerm = "";
+let editingId = null;
+let editingCat = null;
+const selected = new Set();
+
+function normalizeTags(str){
+  if(!str) return [];
+  return [...new Set(str.split(",").map(s=>s.trim()).filter(s=>s.length))];
+}
+function allTagsForCat(catId){
+  const c = data.categories.find(x=>x.id===catId);
+  if(!c) return [];
+  const set = new Set();
+  for(const it of c.items){ for(const t of (it.tags||[])) set.add(t); }
+  return [...set].sort((a,b)=>a.localeCompare(b,"ru"));
+}
+
+function load(){
+  let result;
+  try{
+    const raw = localStorage.getItem(STORE_KEY);
+    if(raw){ result = JSON.parse(raw); }
+    else { result = JSON.parse(JSON.stringify(SEED)); localStorage.setItem(STORE_KEY, JSON.stringify(result)); }
+  }catch(e){ result = JSON.parse(JSON.stringify(SEED)); }
+
+  // migration: fix incorrect BMI formula (idempotent, on local copy)
+  const OLD = "масса тела (кг) / рост * рост (в метрах)";
+  const NEW = "масса тела (кг) / (рост (м) × рост (м))";
+  let migrated = false;
+  for(const c of result.categories){
+    for(const it of c.items){
+      if(it.text && it.text.includes(OLD)){ it.text = it.text.replace(OLD, NEW); migrated = true; }
+    }
+  }
+
+  // однократный merge новых юридических формулировок (не затирает ручные правки/существующие)
+  const MERGE_VER = 1;
+  if(!result._legalMerge || result._legalMerge < MERGE_VER){
+    const legalCat = result.categories.find(x=>x.id==="legal");
+    if(legalCat){
+      const existing = new Set(legalCat.items.map(x=>x.id));
+      let added = false;
+      for(const m of LEGAL_MERGE){
+        if(!existing.has(m.id)){
+          legalCat.items.push({id:m.id, fav:false, text:m.text, tags:[]});
+          added = true;
+        }
+      }
+      result._legalMerge = MERGE_VER;
+      if(added){ localStorage.setItem(STORE_KEY, JSON.stringify(result)); }
+    }
+  }
+
+  // однократная расстановка авто-заголовков для существующих фраз (ручные правки заголовка не затираются)
+  const TITLE_VER = 1;
+  if(!result._titleVer || result._titleVer < TITLE_VER){
+    let titled = false;
+    for(const c of result.categories){
+      for(const it of c.items){
+        if(!it.title && AUTO_TITLES[it.id]){ it.title = AUTO_TITLES[it.id]; titled = true; }
+      }
+    }
+    result._titleVer = TITLE_VER;
+    if(titled){ localStorage.setItem(STORE_KEY, JSON.stringify(result)); }
+  }
+
+  // однократное добавление новых фраз категории "Лекарственная терапия"
+  // (для пользователей, у которых localStorage уже заполнен старой версией SEED)
+  const MED_MERGE_VER = 1;
+  if(!result._medMerge || result._medMerge < MED_MERGE_VER){
+    const meds = result.categories.find(c=>c.id==="medications");
+    if(meds){
+      const existing = new Set(meds.items.map(x=>x.id));
+      const NEW_MEDS = [
+        { id:"med22", fav:false, title:"Дигоксин", tags:["Ритм"], text:"Дигоксин 0,25 мг по 1/2 таб. утром в 08:00 под контролем ЧСС, ЭКГ (интервал PQ, признаки гликозидной интоксикации), калия крови. Коррекция дозы у терапевта/кардиолога. При СКФ < 60 мл/мин/1,73м² доза снижается. При появлении тошноты, нарушения зрения, перебоев в работе сердца — немедленно прекратить приём и обратиться к врачу." },
+        { id:"med23", fav:false, title:"Метформин", tags:["Сахароснижающие"], text:"Метформин 500 мг по 1 таб. 2 раза в сутки во время еды (в 08:00 и 20:00). При недостаточном контроле гликемии — увеличение дозы до 1000 мг 2 раза в сутки (коррекция с эндокринологом). Контроль креатинина с расчётом СКФ не реже 1 раза в год. При СКФ < 30 мл/мин/1,73м² — отмена. При планируемом в/в введении контраста — отмена за 48 ч до и возобновление через 48 ч после." },
+        { id:"med24", fav:false, title:"Изосорбида мононитрат 20 мг", tags:["Нитраты"], text:"Изосорбида мононитрат 20 мг по 1 таб. 2 раза в сутки (в 08:00 и 14:00). Обязательный безнитратный период не менее 8–12 часов (обычно с 16:00 до 08:00 следующего дня). При приступе стенокардии дополнительно нитроспрей под язык. Не сочетать с ингибиторами ФДЭ-5 (силденафил, тадалафил, варденафил)." },
+        { id:"med25", fav:false, title:"Изосорбида мононитрат 40 мг (пролонг.)", tags:["Нитраты"], text:"Изосорбида мононитрат 40 мг (пролонгированная форма) по 1 таб. утром в 08:00. Обязательный безнитратный период не менее 8–12 часов (вечер и ночь без препарата). При приступе стенокардии дополнительно нитроспрей под язык. Не сочетать с ингибиторами ФДЭ-5 (силденафил, тадалафил, варденафил)." },
+        { id:"med26", fav:false, title:"Изосорбида динитрат 10 мг", tags:["Нитраты"], text:"Изосорбида динитрат 10 мг по 1 таб. 3 раза в сутки (в 08:00, 12:00, 16:00) либо ситуационно — за 10–15 минут до планируемой физической нагрузки. Обязательный безнитратный период не менее 8–12 часов (вечер и ночь без препарата). При приступе стенокардии дополнительно нитроспрей под язык. Не сочетать с ингибиторами ФДЭ-5 (силденафил, тадалафил, варденафил)." },
+        { id:"med27", fav:false, title:"Карведилол", tags:["Антигипертензивные","Ритм"], text:"Карведилол 12,5 мг по 1/2 таб. 2 раза в сутки (в 08:00 и 20:00). Титрация каждые 2 недели до целевой дозы (обычно 12,5–25 мг 2 раза в сутки) под контролем АД, ЧСС, веса, отёков. Начало терапии — только со стабильного состояния (без признаков декомпенсации ХСН). Коррекция дозы — с кардиологом." },
+        { id:"med28", fav:false, title:"Моксонидин (плановый приём)", tags:["Антигипертензивные"], text:"Моксонидин 0,2 мг по 1 таб. утром в 08:00 под контролем АД. При недостаточном эффекте — увеличение до 0,4 мг (0,2 мг утром и 0,2 мг вечером). Не отменять резко. Коррекция дозы — с терапевтом/кардиологом." },
+        { id:"med29", fav:false, title:"Моксонидин (экстренная самопомощь)", tags:["Антигипертензивные"], text:"При резком повышении АД (неосложнённый гипертонический криз) — моксонидин 0,4 мг однократно под язык, в положении сидя или лёжа, под контролем АД. Если через 30–40 минут АД не снизилось или появились боли в груди, одышка, слабость в конечностях, нарушение речи — вызвать скорую помощь. Максимальная суточная доза моксонидина — 0,6 мг (например, 0,4 мг + 0,2 мг)." }
+      ];
+      let added = false;
+      for(const m of NEW_MEDS){
+        if(!existing.has(m.id)){
+          meds.items.push({id:m.id, fav:false, title:m.title, text:m.text, tags:m.tags});
+          added = true;
+        }
+      }
+      result._medMerge = MED_MERGE_VER;
+      if(added){ localStorage.setItem(STORE_KEY, JSON.stringify(result)); }
+    }
+  }
+
+
+  // однократное исправление тегов и удаление устаревшего поля tagVer
+  const MED_TAGS_FIX_VER = 1;
+  if(!result._medTagsFix || result._medTagsFix < MED_TAGS_FIX_VER){
+    const MANUAL_TAGS = {
+      med22: ["Ритм"],
+      med23: ["Сахароснижающие"],
+      med24: ["Нитраты"],
+      med25: ["Нитраты"],
+      med26: ["Нитраты"],
+      med27: ["Антигипертензивные", "Ритм"],
+      med28: ["Антигипертензивные"],
+      med29: ["Антигипертензивные"]
+    };
+    const meds = result.categories.find(c=>c.id==="medications");
+    if(meds){
+      for(const it of meds.items){
+        if(MANUAL_TAGS[it.id] && (!it.tags || it.tags.length === 0)){
+          it.tags = MANUAL_TAGS[it.id].slice();
+        }
+      }
+    }
+    // гигиена: удалить устаревшее поле tagVer у всех фраз во всех категориях
+    for(const c of result.categories){
+      for(const it of c.items){
+        if(it.tagVer !== undefined){ delete it.tagVer; }
+      }
+    }
+    result._medTagsFix = MED_TAGS_FIX_VER;
+    localStorage.setItem(STORE_KEY, JSON.stringify(result));
+  }
+
+  // однократная перестановка фраз в категории "Лекарственная терапия":
+  // ритм и ЧСС → давление и ХСН → антитромботическое → статины → нитраты и прочее → метформин
+  const MED_ORDER_VER = 2;
+  if(!result._medOrderVer || result._medOrderVer < MED_ORDER_VER){
+    const MED_ORDER = ["med1","med2","med3","med4","med5","med22","med27","med6","med7","med9","med8","med12","med10","med28","med29","med11","med13","med14","med15","med16","med17","med18","med19","med20","med21","med24","med25","med26","med23"];
+    const meds = result.categories.find(c=>c.id==="medications");
+    if(meds){
+      const byId = new Map(meds.items.map(it=>[it.id, it]));
+      const ordered = [];
+      for(const id of MED_ORDER){
+        if(byId.has(id)){ ordered.push(byId.get(id)); byId.delete(id); }
+      }
+      for(const it of meds.items){ if(byId.has(it.id)){ ordered.push(it); byId.delete(it.id); } }
+      meds.items = ordered;
+    }
+    result._medOrderVer = MED_ORDER_VER;
+    localStorage.setItem(STORE_KEY, JSON.stringify(result));
+  }
+
+  if(migrated){ localStorage.setItem(STORE_KEY, JSON.stringify(result)); }
+  return result;
+}
+function save(){ localStorage.setItem(STORE_KEY, JSON.stringify(data)); }
+function uid(){ return "x"+Math.random().toString(36).slice(2,9); }
+
+function allItems(){
+  let out=[];
+  for(const c of data.categories){
+    for(const it of c.items){ out.push({cat:c, item:it}); }
+  }
+  return out;
+}
+function totalCount(){ return allItems().length; }
+function favCount(){ return allItems().filter(x=>x.item.fav).length; }
+
+function visibleItems(){
+  let list = allItems();
+  if(currentCat==="fav"){ list = list.filter(x=>x.item.fav); }
+  else if(currentCat!=="all"){ list = list.filter(x=>x.cat.id===currentCat); }
+  if(activeTag){ list = list.filter(x=>(x.item.tags||[]).includes(activeTag)); }
+  if(searchTerm){
+    const q = searchTerm.toLowerCase();
+    list = list.filter(x => {
+      const it = x.item;
+      return it.text.toLowerCase().includes(q)
+          || (it.title || "").toLowerCase().includes(q)
+          || (it.tags || []).some(t => t.toLowerCase().includes(q))
+          || x.cat.name.toLowerCase().includes(q);
+    });
+  }
+  return list;
+}
+
+/* ---------- render ---------- */
+function render(){
+  renderNav();
+  renderItems();
+  updateCollectBar();
+}
+
+function renderNav(){
+  const nav = document.getElementById("fbNav");
+  nav.innerHTML = "";
+  const all = document.createElement("div");
+  all.className = "cat" + (currentCat==="all"?" active":"");
+  all.innerHTML = "<span>Все фразы</span><span class='cnt'>"+totalCount()+"</span>";
+  all.onclick = ()=>{ currentCat="all"; searchTerm=""; document.getElementById("fbSearch").value=""; render(); };
+  nav.appendChild(all);
+
+  const fav = document.createElement("div");
+  fav.className = "cat" + (currentCat==="fav"?" active":"");
+  fav.innerHTML = "<span>★ Частые</span><span class='cnt'>"+favCount()+"</span>";
+  fav.onclick = ()=>{ currentCat="fav"; searchTerm=""; document.getElementById("fbSearch").value=""; render(); };
+  nav.appendChild(fav);
+
+  for(const c of data.categories){
+    const el = document.createElement("div");
+    el.className = "cat" + (currentCat===c.id?" active":"");
+    const name = document.createElement("span"); name.textContent = c.name;
+    const cnt = document.createElement("span"); cnt.className="cnt"; cnt.textContent = c.items.length;
+    el.appendChild(name); el.appendChild(cnt);
+    el.onclick = ()=>{ currentCat=c.id; searchTerm=""; activeTag=null; document.getElementById("fbSearch").value=""; render(); };
+    // DnD категорий
+    el.draggable=true;
+    el.addEventListener("dragstart",(e)=>{ el.classList.add("dragging"); e.dataTransfer.effectAllowed="move"; e.dataTransfer.setData("text/cat", c.id); });
+    el.addEventListener("dragend",()=>{ el.classList.remove("dragging"); document.querySelectorAll(".cat.drop-line-cat,.cat.drop-line-cat-top").forEach(x=>x.classList.remove("drop-line-cat","drop-line-cat-top")); });
+    el.addEventListener("dragover",(e)=>{ e.preventDefault(); const r=el.getBoundingClientRect(); const after=(e.clientY-r.top)>r.height/2; document.querySelectorAll(".cat.drop-line-cat,.cat.drop-line-cat-top").forEach(x=>x.classList.remove("drop-line-cat","drop-line-cat-top")); el.classList.add(after?"drop-line-cat":"drop-line-cat-top"); });
+    el.addEventListener("dragleave",()=>{ el.classList.remove("drop-line-cat","drop-line-cat-top"); });
+    el.addEventListener("drop",(e)=>{ e.preventDefault(); el.classList.remove("drop-line-cat","drop-line-cat-top"); const id=e.dataTransfer.getData("text/cat"); if(id && id!==c.id) reorderCats(id, c.id, (e.clientY-el.getBoundingClientRect().top)>el.getBoundingClientRect().height/2); });
+    nav.appendChild(el);
+  }
+  const add = document.createElement("button");
+  add.className="addcat"; add.textContent="+ Новая категория";
+  add.onclick = addCategory;
+  nav.appendChild(add);
+}
+
+function renderItems(){
+  const wrap = document.getElementById("fbItems");
+  const titleEl = document.getElementById("fbCatTitle");
+  const countEl = document.getElementById("fbCatCount");
+  wrap.innerHTML = "";
+
+  const list = visibleItems();
+  if(currentCat==="fav"){ titleEl.textContent = "★ Частые"; }
+  else if(currentCat==="all"){ titleEl.textContent = "Все фразы"; }
+  else { const c=data.categories.find(x=>x.id===currentCat); titleEl.textContent = c?c.name:"Все фразы"; }
+  countEl.textContent = list.length + (searchTerm?" найдено":" фраз");
+
+  // чипы по тегам (только для конкретной категории, не для "все"/"частые")
+  const chipsWrap = document.createElement("div"); chipsWrap.className="fb-chips";
+  if(currentCat!=="all" && currentCat!=="fav"){
+    const tags = allTagsForCat(currentCat);
+    if(tags.length){
+      const mk=(label, tag, active)=>{
+        const ch=document.createElement("button"); ch.className="fb-chip"+(active?" active":"");
+        ch.innerHTML = label + (tag? ' <span class="n"></span>':'');
+        if(tag){ // посчитать сколько фраз с этим тегом
+          const n = data.categories.find(x=>x.id===currentCat).items.filter(it=>(it.tags||[]).includes(tag)).length;
+          ch.querySelector(".n").textContent = n;
+        }
+        ch.onclick=()=>{ activeTag = (activeTag===tag)?null:tag; searchTerm=""; document.getElementById("fbSearch").value=""; render(); };
+        return ch;
+      };
+      chipsWrap.appendChild(mk("Все", null, activeTag===null));
+      for(const t of tags){ chipsWrap.appendChild(mk(t, t, activeTag===t)); }
+    }
+  }
+  if(chipsWrap.children.length) wrap.appendChild(chipsWrap);
+
+  if(list.length===0){
+    const e=document.createElement("div"); e.className="fb-empty";
+    e.textContent = searchTerm ? "Ничего не найдено." : (currentCat==="fav" ? "Пока нет избранных. Нажмите ★ на фразе." : "Здесь пока нет фраз. Нажмите «+ Добавить фразу».");
+    wrap.appendChild(e);
+    return;
+  }
+
+  // drag&drop фраз разрешён только без поиска и без активного тега
+  const dndAllowed = !searchTerm && !activeTag;
+
+  for(const {cat,item} of list){
+    const card=document.createElement("div"); card.className="fb-item"; card.dataset.id=item.id;
+    if(selected.has(item.id)) card.classList.add("selected");
+
+    const pick=document.createElement("div"); pick.className="pick"; pick.title="Выбрать для сборки";
+    pick.onclick=(e)=>{ e.stopPropagation(); toggleSelect(item.id, card); };
+    card.appendChild(pick);
+
+    const body=document.createElement("div"); body.className="body";
+
+    if(item.title){
+      const head=document.createElement("div"); head.className="fb-title"; head.textContent=item.title;
+      body.appendChild(head);
+    }
+
+    const topRow=document.createElement("div"); topRow.style.display="flex"; topRow.style.alignItems="flex-start"; topRow.style.gap="8px";
+    const fav=document.createElement("button"); fav.className="fav"+(item.fav?" on":""); fav.title="В избранное"; fav.textContent=item.fav?"★":"☆";
+    fav.style.flex="0 0 auto";
+    fav.onclick=(e)=>{ e.stopPropagation(); toggleFav(cat.id, item.id, fav); };
+    const txt=document.createElement("div"); txt.className="txt"; txt.textContent=item.text; txt.style.flex="1 1 auto";
+    topRow.appendChild(fav); topRow.appendChild(txt);
+    body.appendChild(topRow);
+
+    const acts=document.createElement("div"); acts.className="acts";
+    const edit=document.createElement("button"); edit.title="Изменить"; edit.textContent="✎";
+    edit.onclick=(e)=>{ e.stopPropagation(); openModal(cat.id, item.id); };
+    const del=document.createElement("button"); del.className="del"; del.title="Удалить"; del.textContent="✕";
+    del.onclick=(e)=>{ e.stopPropagation(); removeItem(cat.id, item.id); };
+    acts.appendChild(edit); acts.appendChild(del);
+    body.appendChild(acts);
+
+    // перетаскивание всей карточки (без значка)
+    if(dndAllowed){
+      card.draggable=true;
+      card.addEventListener("dragstart",(e)=>{
+        card.classList.add("dragging");
+        e.dataTransfer.effectAllowed="move";
+        e.dataTransfer.setData("text/plain", item.id);
+      });
+      card.addEventListener("dragend",()=>{ card.classList.remove("dragging"); clearDropLines(); });
+      card.addEventListener("dragover",(e)=>{
+        if(!dndAllowed) return;
+        e.preventDefault();
+        const r=card.getBoundingClientRect(); const after = (e.clientY - r.top) > r.height/2;
+        clearDropLines();
+        card.classList.add(after ? "drop-line" : "drop-line-top");
+      });
+      card.addEventListener("dragleave",()=>{ card.classList.remove("drop-line","drop-line-top"); });
+      card.addEventListener("drop",(e)=>{
+        e.preventDefault(); card.classList.remove("drop-line","drop-line-top");
+        const id=e.dataTransfer.getData("text/plain"); if(id===item.id) return;
+        reorderItems(cat.id, id, item.id, (e.clientY - card.getBoundingClientRect().top) > card.getBoundingClientRect().height/2);
+      });
+    }
+
+    card.appendChild(body);
+    wrap.appendChild(card);
+
+    // сворачивание длинных фраз — измеряем ПОСЛЕ вставки в DOM по факту переполнения
+    txt.classList.add("clamp");
+    if(txt.scrollHeight > txt.clientHeight + 1){
+      const ex=document.createElement("div"); ex.className="fb-expand";
+      const chev=document.createElement("div"); chev.className="chev";
+      ex.appendChild(chev);
+      ex.onclick=(e)=>{
+        e.stopPropagation();
+        const isClamped = txt.classList.toggle("clamp");
+        ex.classList.toggle("open", !isClamped);
+      };
+      body.appendChild(ex);
+    } else {
+      txt.classList.remove("clamp");
+    }
+
+    card.onclick=()=>copyText(item.text, card);
+  }
+}
+
+function clearDropLines(){
+  document.querySelectorAll(".fb-item.drop-line,.fb-item.drop-line-top").forEach(el=>el.classList.remove("drop-line","drop-line-top"));
+}
+
+function reorderItems(catId, dragId, targetId, after){
+  const c = data.categories.find(x=>x.id===catId);
+  if(!c) return;
+  const from = c.items.findIndex(x=>x.id===dragId);
+  if(from<0) return;
+  const [moved] = c.items.splice(from,1);
+  let to = c.items.findIndex(x=>x.id===targetId);
+  if(after) to += 1;
+  c.items.splice(to,0,moved);
+  save(); render();
+}
+
+function reorderCats(dragId, targetId, after){
+  if(dragId===targetId) return;
+  const from = data.categories.findIndex(x=>x.id===dragId);
+  if(from<0) return;
+  const [moved] = data.categories.splice(from,1);
+  let to = data.categories.findIndex(x=>x.id===targetId);
+  if(after) to += 1;
+  data.categories.splice(to,0,moved);
+  save(); render();
+}
+
+/* ---------- selection & collect ---------- */
+function toggleSelect(id, cardEl){
+  if(selected.has(id)) selected.delete(id); else selected.add(id);
+  if(cardEl) cardEl.classList.toggle("selected", selected.has(id));
+  updateCollectBar();
+}
+function updateCollectBar(){
+  const n=selected.size;
+  const bar=document.getElementById("fbCollect");
+  if(n>0){
+    bar.classList.add("show");
+    document.getElementById("fbCollectInfo").textContent="Выбрано: "+n;
+    document.getElementById("btnCollect").textContent="Собрать блок ("+n+")";
+  } else { bar.classList.remove("show"); }
+}
+function collectBlock(){
+  if(selected.size===0) return;
+  const groups=[];
+  for(const c of data.categories){
+    const its=c.items.filter(it=>selected.has(it.id));
+    if(its.length){ groups.push("## "+c.name+"\n\n"+its.map(it=>it.text).join("\n\n")); }
+  }
+  const text=groups.join("\n\n");
+  copyText(text, null);
+  toast("Собрано "+selected.size+" фраз — вставьте в карту/документ");
+  selected.clear(); render();
+}
+
+/* ---------- fav ---------- */
+function toggleFav(catId, itemId, starEl){
+  const c=data.categories.find(x=>x.id===catId);
+  const it=c.items.find(x=>x.id===itemId);
+  it.fav=!it.fav; save();
+  if(currentCat==="fav"){ render(); return; }
+  starEl.textContent = it.fav?"★":"☆";
+  starEl.classList.toggle("on", it.fav);
+  renderNav();
+}
+
+/* ---------- actions ---------- */
+function copyText(t, cardEl){
+  const done=()=>{
+    toast("Скопировано в буфер обмена");
+    if(cardEl){ cardEl.classList.add("copied"); setTimeout(()=>cardEl.classList.remove("copied"), 900); }
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(t).then(done).catch(()=>fallbackCopy(t,done));
+  } else { fallbackCopy(t,done); }
+}
+function fallbackCopy(t,done){
+  const ta=document.createElement("textarea");
+  ta.value=t; ta.style.position="fixed"; ta.style.opacity="0";
+  document.body.appendChild(ta); ta.focus(); ta.select();
+  try{ document.execCommand("copy"); done(); }catch(e){ toast("Не удалось скопировать"); }
+  document.body.removeChild(ta);
+}
+
+function openModal(catId, itemId){
+  editingCat = catId || currentCat;
+  editingId = itemId || null;
+  const sel=document.getElementById("fCat");
+  sel.innerHTML="";
+  for(const c of data.categories){
+    const o=document.createElement("option"); o.value=c.id; o.textContent=c.name; sel.appendChild(o);
+  }
+  if(editingCat && editingCat!=="all" && editingCat!=="fav"){ sel.value=editingCat; }
+  const ta=document.getElementById("fText");
+  const ti=document.getElementById("fTags");
+  const ttl=document.getElementById("fTitle");
+  if(editingId){
+    const c=data.categories.find(x=>x.id===editingCat);
+    const it=c.items.find(x=>x.id===editingId);
+    ta.value=it.text; ti.value=(it.tags||[]).join(", "); ttl.value=it.title||""; document.getElementById("fbModalTitle").textContent="Изменить фразу";
+  } else {
+    ta.value=""; ti.value=""; ttl.value=""; document.getElementById("fbModalTitle").textContent="Добавить фразу";
+  }
+  document.getElementById("fbOverlay").classList.add("show");
+  ta.focus();
+}
+function closeModal(){ document.getElementById("fbOverlay").classList.remove("show"); editingId=null; editingCat=null; }
+
+function saveModal(){
+  const text=document.getElementById("fText").value.trim();
+  const catId=document.getElementById("fCat").value;
+  const tags=normalizeTags(document.getElementById("fTags").value);
+  const title=document.getElementById("fTitle").value.trim();
+  if(!text){ toast("Введите текст"); return; }
+  const c=data.categories.find(x=>x.id===catId);
+  if(!c){ toast("Категория не найдена"); return; }
+  if(editingId){
+    const it=c.items.find(x=>x.id===editingId);
+    if(it){ it.text=text; it.tags=tags; it.title=title; }
+  } else {
+    c.items.push({id:uid(), fav:false, text:text, tags:tags, title:title});
+  }
+  save(); closeModal(); render(); toast("Сохранено");
+}
+
+function removeItem(catId, itemId){
+  if(!confirm("Удалить эту фразу?")) return;
+  const c=data.categories.find(x=>x.id===catId);
+  if(!c) return;
+  c.items=c.items.filter(x=>x.id!==itemId);
+  selected.delete(itemId);
+  save(); render(); toast("Удалено");
+}
+
+function addCategory(){
+  const name=prompt("Название новой категории:");
+  if(!name) return;
+  data.categories.push({id:uid(), name:name.trim(), items:[]});
+  save(); render(); toast("Категория добавлена");
+}
+
+function clearAll(){
+  if(!confirm("Удалить ВСЕ фразы из всех категорий? (Категории останутся пустыми)")) return;
+  for(const c of data.categories){ c.items=[]; }
+  selected.clear();
+  save(); render(); toast("Все фразы очищены");
+}
+
+/* ---------- export / import ---------- */
+function exportMD(){
+  let md="# База формулировок (кардиолог, амбулатория)\n\n";
+  md+="Резервная копия, сформирована "+new Date().toLocaleString("ru-RU")+".\n\n";
+  for(const c of data.categories){
+    md+="## "+c.name+"\n\n";
+    if(c.items.length===0){ md+="_(пусто)_\n\n"; }
+    for(const it of c.items){ md+="- "+it.text+"\n"; }
+    md+="\n";
+  }
+  download(md, "formula-bank.md", "text/markdown");
+}
+function exportJSON(){
+  download(JSON.stringify(data,null,2), "formula-bank.json", "application/json");
+}
+function importJSON(file){
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const obj=JSON.parse(reader.result);
+      if(!obj.categories || !Array.isArray(obj.categories)) throw new Error("нет categories");
+      if(!confirm("Заменить текущие данные импортированными?")) return;
+      data=obj; selected.clear(); save(); currentCat="all"; searchTerm=""; render(); toast("Импортировано");
+    }catch(e){ alert("Не удалось прочитать файл: "+e.message); }
+  };
+  reader.readAsText(file);
+}
+function download(content, filename, type){
+  const blob=new Blob([content], {type:(type||"text/plain")+";charset=utf-8"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download=filename;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(url), 1000);
+}
+
+/* ---------- toast ---------- */
+let toastTimer=null;
+function toast(msg){
+  const t=document.getElementById("fbToast");
+  t.textContent=msg; t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove("show"), 1800);
+}
+
+/* ---------- wire up ---------- */
+document.getElementById("btnAdd").onclick=()=>openModal(currentCat==="all"||currentCat==="fav"?null:currentCat, null);
+document.getElementById("modalCancel").onclick=closeModal;
+// закрытие модалки по клику на тёмный фон.
+// mousedown запоминаем, чтобы не закрывать модалку, когда пользователь
+// начал выделять текст в textarea и увёл курсор за пределы окна.
+(function(){
+  const overlay = document.getElementById("fbOverlay");
+  let mousedownOnOverlay = false;
+  overlay.addEventListener("mousedown", (e)=>{
+    mousedownOnOverlay = (e.target === overlay);
+  });
+  overlay.addEventListener("click", (e)=>{
+    if(e.target === overlay && mousedownOnOverlay) closeModal();
+    mousedownOnOverlay = false;
+  });
+})();
+document.getElementById("modalSave").onclick=saveModal;
+document.getElementById("btnExportMd").onclick=exportMD;
+document.getElementById("btnExportJson").onclick=exportJSON;
+document.getElementById("btnClear").onclick=clearAll;
+document.getElementById("fileInput").onchange=(e)=>{ if(e.target.files[0]) importJSON(e.target.files[0]); e.target.value=""; };
+document.getElementById("btnImport").onclick=()=>document.getElementById("fileInput").click();
+document.getElementById("btnCollect").onclick=collectBlock;
+document.getElementById("btnClearSel").onclick=()=>{ selected.clear(); render(); };
+
+const searchEl=document.getElementById("fbSearch");
+searchEl.oninput=(e)=>{ searchTerm=e.target.value.trim(); activeTag=null; render(); };
+searchEl.addEventListener("keydown",(e)=>{
+  if(e.key==="Enter"){
+    const list=visibleItems();
+    if(list.length){ copyText(list[0].item.text, null); }
+  }
+});
+
+document.addEventListener("keydown",(e)=>{
+  const tag=(e.target.tagName||"").toLowerCase();
+  const inField = tag==="input"||tag==="textarea"||e.target.isContentEditable;
+  const overlayShown = document.getElementById("fbOverlay").classList.contains("show");
+  if(e.key==="/" && !inField){ e.preventDefault(); searchEl.focus(); }
+  else if(e.key==="Escape"){
+    if(overlayShown){ closeModal(); }
+    else if(selected.size>0){ selected.clear(); render(); }
+  }
+  else if((e.ctrlKey||e.metaKey) && e.key==="Enter"){
+    if(selected.size>0){ e.preventDefault(); collectBlock(); }
+  }
+});
+
+render();
+</script>
+</body>
+</html>
