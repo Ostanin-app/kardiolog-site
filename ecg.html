@@ -77,13 +77,6 @@
     margin-bottom: 16px;
     box-shadow: 0 4px 16px -4px rgba(11, 92, 138, .15);
   }
-  .result-card h2 {
-    font-size: 17px;
-    color: var(--primary);
-    border-bottom: 2px solid var(--primary-soft);
-    padding-bottom: 8px;
-    margin: 0 0 14px;
-  }
 
   /* === ПОЛЯ ВВОДА === */
   .row { display: flex; flex-wrap: wrap; gap: 10px 18px; align-items: center; margin-bottom: 10px; }
@@ -156,7 +149,7 @@
   }
   .preset:hover { background: var(--primary); color: #fff; }
 
-  /* === ПЕРЕКЛЮЧАТЕЛЬ РЕЖИМА === */
+  /* === ПЕРЕКЛЮЧАТЕЛЬ === */
   .toggle { display: inline-flex; background: var(--primary-soft); border-radius: 20px; padding: 3px; gap: 3px; }
   .toggle button { border: none; background: transparent; padding: 6px 14px; border-radius: 17px; font-weight: 600; font-size: 13px; cursor: pointer; color: var(--primary-2); }
   .toggle button.on { background: var(--primary); color: #fff; }
@@ -179,6 +172,29 @@
   }
   .dyn-group .lbl { margin-bottom: 6px; display: block; }
   .dyn-group .row { margin-bottom: 6px; }
+
+  /* Калькулятор ГЛЖ — таблица результатов */
+  .lvh-results {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    font-size: 12.5px;
+    line-height: 1.65;
+  }
+  .lvh-results .lvh-row { display: flex; align-items: baseline; gap: 10px; padding: 2px 0; }
+  .lvh-results .lvh-name { flex: 0 0 auto; min-width: 210px; }
+  .lvh-results .lvh-val { flex: 0 0 auto; font-weight: 700; min-width: 80px; text-align: right; }
+  .lvh-results .lvh-norm { flex: 1 1 auto; color: var(--muted); font-size: 11.5px; }
+  .lvh-results .lvh-row.ok { color: var(--text); }
+  .lvh-results .lvh-row.hit { color: var(--red-deep); }
+  .lvh-results .lvh-row.hit .lvh-val { font-weight: 800; }
+  .lvh-results .lvh-row.na { color: var(--muted); font-style: italic; }
+  .lvh-results .lvh-verdict { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border); font-weight: 700; }
+  .lvh-results .lvh-verdict.hit { color: var(--red-deep); }
+  .lvh-results .lvh-verdict.ok { color: var(--green-deep); }
+  .lvh-results .lvh-qrs-hint { margin-top: 8px; padding: 8px 11px; background: var(--orange-soft); border-left: 3px solid var(--orange); color: var(--orange-deep); font-size: 12px; border-radius: 0 var(--r-sm) var(--r-sm) 0; }
 </style>
 </head>
 <body>
@@ -206,10 +222,6 @@
       <button data-s="m" class="on">♂ Мужской</button>
       <button data-s="f">♀ Женский</button>
     </div>
-    <select id="sex" style="display:none;">
-      <option value="m">Мужской</option>
-      <option value="f">Женский</option>
-    </select>
   </div>
 
   <div class="ecg-grid">
@@ -263,6 +275,23 @@
               <option value="VVIR">VVIR</option>
             </select>
           </div>
+        </div>
+
+        <div class="sub" id="pacerDetailWrap" style="display:none;">
+          <label class="lbl">Детали ЭКС</label>
+          <div class="row">
+            <label class="chk" id="pacerSpkLbl"><input type="checkbox" id="pacerSpk">спайки</label>
+            <div class="field" style="max-width:260px;margin-bottom:0;"><label class="lbl">Захват</label>
+              <select id="pacerCap">
+                <option value="">— не указан</option>
+                <option value="эффективный предсердный захват">предсердный</option>
+                <option value="эффективный желудочковый захват">желудочковый</option>
+                <option value="эффективный бивентрикулярный захват">бивентрикулярный</option>
+                <option value="неэффективная стимуляция">неэффективная</option>
+              </select>
+            </div>
+          </div>
+          <div class="field"><label class="lbl">Прочее по ЭКС</label><input id="pacerNote" placeholder="сенсинг, пороги…"></div>
         </div>
 
         <div class="field" style="max-width:400px;">
@@ -423,10 +452,20 @@
           <label class="chk"><input type="checkbox" data-k="on">Элевация ST</label>
         </div>
         <div class="sub" id="stElBody" style="display:none;">
+          <label class="lbl">Отведения:</label>
           <div class="chips" id="stElLeads">
-            <label class="chk"><input type="checkbox" data-k="ii_iii_avf">II,III,aVF</label>
-            <label class="chk"><input type="checkbox" data-k="v1_v4">V1–V4</label>
-            <label class="chk"><input type="checkbox" data-k="v5_v6">V5–V6,I,aVL</label>
+            <label class="chk"><input type="checkbox" data-k="i">I</label>
+            <label class="chk"><input type="checkbox" data-k="ii">II</label>
+            <label class="chk"><input type="checkbox" data-k="iii">III</label>
+            <label class="chk"><input type="checkbox" data-k="avr">aVR</label>
+            <label class="chk"><input type="checkbox" data-k="avl">aVL</label>
+            <label class="chk"><input type="checkbox" data-k="avf">aVF</label>
+            <label class="chk"><input type="checkbox" data-k="v1">V1</label>
+            <label class="chk"><input type="checkbox" data-k="v2">V2</label>
+            <label class="chk"><input type="checkbox" data-k="v3">V3</label>
+            <label class="chk"><input type="checkbox" data-k="v4">V4</label>
+            <label class="chk"><input type="checkbox" data-k="v5">V5</label>
+            <label class="chk"><input type="checkbox" data-k="v6">V6</label>
           </div>
           <div class="row">
             <div class="field" style="max-width:200px;"><label class="lbl">Тип</label>
@@ -443,10 +482,20 @@
           <label class="chk"><input type="checkbox" data-k="on">Депрессия ST</label>
         </div>
         <div class="sub" id="stDepBody" style="display:none;">
+          <label class="lbl">Отведения:</label>
           <div class="chips" id="stDepLeads">
-            <label class="chk"><input type="checkbox" data-k="ii_iii_avf">II,III,aVF</label>
-            <label class="chk"><input type="checkbox" data-k="v1_v4">V1–V4</label>
-            <label class="chk"><input type="checkbox" data-k="v5_v6">V5–V6,I,aVL</label>
+            <label class="chk"><input type="checkbox" data-k="i">I</label>
+            <label class="chk"><input type="checkbox" data-k="ii">II</label>
+            <label class="chk"><input type="checkbox" data-k="iii">III</label>
+            <label class="chk"><input type="checkbox" data-k="avr">aVR</label>
+            <label class="chk"><input type="checkbox" data-k="avl">aVL</label>
+            <label class="chk"><input type="checkbox" data-k="avf">aVF</label>
+            <label class="chk"><input type="checkbox" data-k="v1">V1</label>
+            <label class="chk"><input type="checkbox" data-k="v2">V2</label>
+            <label class="chk"><input type="checkbox" data-k="v3">V3</label>
+            <label class="chk"><input type="checkbox" data-k="v4">V4</label>
+            <label class="chk"><input type="checkbox" data-k="v5">V5</label>
+            <label class="chk"><input type="checkbox" data-k="v6">V6</label>
           </div>
           <div class="row">
             <div class="field" style="max-width:200px;"><label class="lbl">Тип</label>
@@ -488,36 +537,34 @@
       <div class="card">
         <h2><span class="num">6</span> Дополнительные находки</h2>
         <div class="chips" id="extra">
-          <label class="chk"><input type="checkbox" data-k="lvh_corn">ГЛЖ (Корнелльский)</label>
-          <label class="chk"><input type="checkbox" data-k="lvh_sl">ГЛЖ (Соколов–Лайон)</label>
+          <label class="chk"><input type="checkbox" data-k="lvh_calc">ГЛЖ (калькулятор вольтажных критериев)</label>
           <label class="chk"><input type="checkbox" data-k="erp">Ранняя реполяризация</label>
           <label class="chk"><input type="checkbox" data-k="wpw">WPW</label>
           <label class="chk"><input type="checkbox" data-k="glyc">Гликозидный эффект</label>
-          <label class="chk"><input type="checkbox" data-k="ekg_pacer">ЭКС</label>
           <label class="chk"><input type="checkbox" data-k="pericard">Перикардит</label>
           <label class="chk"><input type="checkbox" data-k="hyperK">Гиперкалиемия</label>
         </div>
-        <div class="sub row" id="lvhCornWrap" style="display:none;">
-          <div class="field" style="max-width:200px;"><label class="lbl">R aVL + S V3, мм</label><input id="cornVal" type="number" placeholder="—"></div>
-        </div>
-        <div class="sub row" id="lvhSlWrap" style="display:none;">
-          <div class="field" style="max-width:200px;"><label class="lbl">S V1 + R V5/V6, мм</label><input id="slVal" type="number" placeholder="—"></div>
-        </div>
-        <div class="sub" id="pacerWrap" style="display:none;">
-          <div class="small" style="margin-bottom:6px;">Режим — в блоке 1. Здесь — детали.</div>
+        <div class="sub" id="lvhCalcWrap" style="display:none;">
+          <label class="lbl">Вольтажные критерии ГЛЖ</label>
           <div class="row">
-            <label class="chk" id="pacerSpkLbl"><input type="checkbox" id="pacerSpk">спайки</label>
-            <div class="field" style="max-width:260px;margin-bottom:0;"><label class="lbl">Захват</label>
-              <select id="pacerCap">
-                <option value="">— не указан</option>
-                <option value="эффективный предсердный захват">предсердный</option>
-                <option value="эффективный желудочковый захват">желудочковый</option>
-                <option value="эффективный бивентрикулярный захват">бивентрикулярный</option>
-                <option value="неэффективная стимуляция">неэффективная</option>
-              </select>
+            <div class="field" style="max-width:150px;">
+              <label class="lbl">R aVL, мм</label>
+              <input id="lvhRaVL" type="number" placeholder="—" title="Амплитуда зубца R в отведении aVL, мм. Порог ≥ 11 мм.">
+            </div>
+            <div class="field" style="max-width:150px;">
+              <label class="lbl">S V3, мм</label>
+              <input id="lvhSV3" type="number" placeholder="—" title="Амплитуда зубца S в отведении V3, мм.">
+            </div>
+            <div class="field" style="max-width:150px;">
+              <label class="lbl">S V1, мм</label>
+              <input id="lvhSV1" type="number" placeholder="—" title="Амплитуда зубца S в отведении V1, мм.">
+            </div>
+            <div class="field" style="max-width:200px;">
+              <label class="lbl">R макс. V5/V6, мм</label>
+              <input id="lvhRV56max" type="number" placeholder="—" title="Введите большее из значений R V5 и R V6.">
             </div>
           </div>
-          <div class="field"><label class="lbl">Прочее по ЭКС</label><input id="pacerNote" placeholder="сенсинг, пороги…"></div>
+          <div id="lvhResults" class="lvh-results"></div>
         </div>
         <div class="hint" id="b6Hint"></div>
       </div>
@@ -526,17 +573,10 @@
     <!-- ПРАВАЯ КОЛОНКА: результат -->
     <div class="results">
       <div class="result-card">
-        <h2>📋 Заключение ЭКГ</h2>
         <div id="out" class="out"></div>
         <div class="btns">
           <button class="act primary" id="copyBtn">📋 Скопировать</button>
           <button class="act ghost" id="clearBtn">🗑 Очистить</button>
-        </div>
-        <div class="btns" style="margin-top:10px;">
-          <div class="toggle" id="modeToggle">
-            <button data-m="brief" class="on">Кратко</button>
-            <button data-m="full">Полное</button>
-          </div>
         </div>
 
         <div class="dyn-group">
@@ -567,11 +607,6 @@
 <div class="toast" id="toast"></div>
 
 <script>
-// === ВЕСЬ JS ОСТАЁТСЯ БЕЗ ИЗМЕНЕНИЙ ===
-// Скопируйте сюда полный блок <script> из предыдущей версии файла.
-// Единственное изменение: замените .container на .ecg-container в CSS,
-// но JS не обращается к контейнеру по классу, поэтому код работает как есть.
-
 const PRESETS = {
   "Норма": {rhythm:"sinus",axis:"normal",reg:true,sinus:true,stIso:true,tWave:{pos:true}},
   "ФП, тахисистолия": {rhythm:"af",hr:120,irreg:true,absent:true,f:true},
@@ -597,10 +632,10 @@ const S = {
   stIso:false,
   tWave:{pos:false,negcor:false,negasym:false,smooth:false,iso:false,tall:false,disc:false},
   tLoc:{inf:false,ant:false,lat:false,glob:false},
-  extra:{lvh_corn:false,lvh_sl:false,erp:false,wpw:false,glyc:false,ekg_pacer:false,pericard:false,hyperK:false},
-  cornVal:"", slVal:"",
+  extra:{lvh_calc:false,erp:false,wpw:false,glyc:false,pericard:false,hyperK:false},
+  lvhRaVL:"", lvhSV3:"", lvhSV1:"", lvhRV56max:"",
   pacerSpk:false, pacerCap:"", pacerNote:"",
-  mode:"brief", dyn:"", dynDate:""
+  dyn:"", dynDate:""
 };
 
 function saveState(){ try{ localStorage.setItem(STORE_KEY, JSON.stringify(S)); }catch(e){} }
@@ -667,7 +702,6 @@ function fmtDate(v){ const m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(v||""); return m? 
 
 function build(){
   const qtc = qtcAll(num(S.qt), num(S.hr));
-  const lines = [];
   const full = [];
 
   const RM = {sinus:"синусовый",atrial:"предсердный",avnodal:"АВ-узловой",af:"фибрилляция предсердий",flutter:"трепетание предсердий",svt:"наджелудочковая тахикардия",vt:"желудочковая тахикардия",pacer:"кардиостимулятора (ЭКС)"};
@@ -684,13 +718,14 @@ function build(){
   const isCHSZh = (S.rhythm==="af"||S.rhythm==="flutter"||S.rhythm==="vt"||(S.rhythm==="pacer"&&S.pacerMode.includes("VV")));
   let hrPart = hrVal ? " с "+(isCHSZh?"ЧСЖ ":"ЧСС ")+hrVal+" в мин" : " (ЧСС/ЧСЖ не указана)";
   let regularity = S.reg?", правильный":S.irreg?", нерегулярный":S.sinusArr?", синусовая аритмия":"";
+  if(S.rhythm==="pacer") regularity = "";
+  const pacerDetails = (S.rhythm==="pacer") ? (()=>{ let t=""; if(S.pacerSpk) t+=", регистрируются спайки стимулятора"; if(S.pacerCap) t+=", "+S.pacerCap; if(S.pacerNote.trim()) t+=", "+S.pacerNote.trim(); return t; })() : "";
 
   const AX = {normal:"нормальная",vertical:"вертикальная",horizontal:"горизонтальная",left:"отклонена влево",right:"отклонена вправо",extleft:"резко отклонена влево",extright:"резко отклонена вправо",indet:"неопределённая"};
   let axisPart = " ЭОС "+(AX[S.axis]||S.axis);
   if(num(S.alpha)!==null) axisPart += " (угол α "+num(S.alpha)+"°)";
 
-  lines.push((shortRhythm?"":"Ритм ")+rhythmType+hrPart+regularity+"."+axisPart+".");
-  full.push((shortRhythm?"":"Ритм: ")+rhythmType+hrPart+regularity+".");
+  full.push((shortRhythm?"":"Ритм: ")+rhythmType+hrPart+regularity+pacerDetails+".");
   full.push("Электрическая ось сердца: "+(AX[S.axis]||S.axis)+(num(S.alpha)!==null?" (угол α "+num(S.alpha)+"°)":"")+".");
 
   const intParts = [];
@@ -717,7 +752,7 @@ function build(){
     intParts.push(avLabels[S.avBlock]);
   }
 
-  if(intParts.length){ const t="Интервалы: "+intParts.join(", ")+"."; lines.push(t); full.push(t); }
+  if(intParts.length){ const t="Интервалы: "+intParts.join(", ")+"."; full.push(t); }
 
   const pw = [];
   const pLeadStr = leadStr(S.pLeads);
@@ -753,7 +788,7 @@ function build(){
     else if(k==="neg23"&&!pLeadStr) t+=" в отведениях II, III, aVF";
     pw.push(t);
   }
-  if(pw.length){ const t="Предсердная активность: "+pw.join(", ")+"."; full.push(t); lines.push(t); }
+  if(pw.length){ const t="Предсердная активность: "+pw.join(", ")+"."; full.push(t); }
 
   const bl = [];
   const blLabels = {pblnpnpg:"ПБЛНПГ (время внутреннего отклонения > 60 мс в V5-V6, отсутствие септального q в I, aVL, V5-V6, дискордантность ST-T)",pbpnpnpg:"ПБПНПГ (rSR' в V1-V2, широкий пологий S в I, aVL, V5-V6)",bpvlnpng:"БПВЛНПГ",bzvlnpng:"БЗВЛНПГ",bifasc:"бифасцикулярная блокада",nsivcd:"неспецифическая внутрижелудочковая блокада"};
@@ -763,49 +798,52 @@ function build(){
   if(bl.length) qrsText="Нарушения проводимости: "+bl.join(", ")+".";
   else if(qrsWide) qrsText="Комплекс QRS расширен (внутрижелудочковое замедление проведения).";
   else if(num(S.qrs)!==null) qrsText="Комплекс QRS не уширен.";
-  if(qrsText){ lines.push(qrsText); full.push(qrsText); }
+  if(qrsText){ full.push(qrsText); }
 
   const qz = [];
   const qzL = {inf:"нижней стенки (II, III, aVF)",ant:"передней стенки (V1–V4)",lat:"боковой стенки (V5–V6, I, aVL)",post:"задне-базальных отделов (V7–V9)"};
   for(const k in S.pathQ){ if(S.pathQ[k]) qz.push(qzL[k]); }
-  if(qz.length){ const t="Патологический зубец Q (рубцовые изменения) в области: "+qz.join(", ")+"."; full.push(t); lines.push(t); }
+  if(qz.length){ const t="Патологический зубец Q (рубцовые изменения) в области: "+qz.join(", ")+"."; full.push(t); }
 
   const RZ_TXT = {V2:"в V2",V3:"в V3",V4:"в V4",V5:"в V5",left:"смещена влево",right:"смещена вправо"};
-  if(S.rz){ const t="Переходная зона: "+RZ_TXT[S.rz]+"."; full.push(t); lines.push(t); }
+  if(S.rz){ const t="Переходная зона: "+RZ_TXT[S.rz]+"."; full.push(t); }
 
   const v1n=num(S.vnoV1), v6n=num(S.vnoV6);
-  if(v1n!==null||v6n!==null){ const seg=[]; if(v1n!==null) seg.push("V1 = "+v1n+" мс"); if(v6n!==null) seg.push("V6 = "+v6n+" мс"); const t="Время внутреннего отклонения: "+seg.join(", ")+"."; full.push(t); lines.push(t); }
+  if(v1n!==null||v6n!==null){ const seg=[]; if(v1n!==null) seg.push("V1 = "+v1n+" мс"); if(v6n!==null) seg.push("V6 = "+v6n+" мс"); const t="Время внутреннего отклонения: "+seg.join(", ")+"."; full.push(t); }
 
   const stMaxTxt = v => { const n=num(v); return v?(n!==null&&String(v).trim()==String(n)?n+" мм":v.trim()):""; };
 
-  if(S.stElOn){ const ld=zoneStr(S.stElLeads); const t="Элевация сегмента ST ("+(S.stElType==="convex"?"выпуклая кверху":S.stElType==="horiz"?"горизонтальная":"косовосходящая")+")"+(ld?" в отведениях "+ld:"")+(S.stElMax?" максимально до "+stMaxTxt(S.stElMax):"")+(S.recip?" с реципрокной депрессией":"")+"."; lines.push(t); full.push(t); }
+  if(S.stElOn){ const ld=zoneStr(S.stElLeads); const t="Элевация сегмента ST ("+(S.stElType==="convex"?"выпуклая кверху":S.stElType==="horiz"?"горизонтальная":"косовосходящая")+")"+(ld?" в отведениях "+ld:"")+(S.stElMax?" максимально до "+stMaxTxt(S.stElMax):"")+(S.recip?" с реципрокной депрессией":"")+"."; full.push(t); }
 
-  if(S.stDepOn){ const ld=zoneStr(S.stDepLeads); const t="Депрессия сегмента ST ("+(S.stDepType==="horiz"?"горизонтальная":S.stDepType==="desc"?"косонисходящая":"косовосходящая")+")"+(ld?" в отведениях "+ld:"")+(S.stDepMax?" максимально до "+stMaxTxt(S.stDepMax):"")+"."; lines.push(t); full.push(t); }
+  if(S.stDepOn){ const ld=zoneStr(S.stDepLeads); const t="Депрессия сегмента ST ("+(S.stDepType==="horiz"?"горизонтальная":S.stDepType==="desc"?"косонисходящая":"косовосходящая")+")"+(ld?" в отведениях "+ld:"")+(S.stDepMax?" максимально до "+stMaxTxt(S.stDepMax):"")+"."; full.push(t); }
 
-  if(S.stIso&&!S.stElOn&&!S.stDepOn){ const t="Сегмент ST на изолинии во всех отведениях."; lines.push(t); full.push(t); }
+  if(S.stIso&&!S.stElOn&&!S.stDepOn){ const t="Сегмент ST на изолинии во всех отведениях."; full.push(t); }
 
   const tw=[];
   const twL={pos:"положительный",negcor:"отрицательный симметричный (коронарный)",negasym:"отрицательный асимметричный (дистрофические изменения)",smooth:"сглажен",iso:"изоэлектричен",tall:"высокий остроконечный",disc:"дискордантен QRS"};
   for(const k in S.tWave){ if(S.tWave[k]&&twL[k]) tw.push(twL[k]); }
-  if(tw.length){ const zt=tLocNominative(S.tLoc); const t="Зубец T: "+tw.join(", ")+(zt?" "+zt+".":"."); lines.push(t); full.push(t); }
+  if(tw.length){ const zt=tLocNominative(S.tLoc); const t="Зубец T: "+tw.join(", ")+(zt?" "+zt+".":"."); full.push(t); }
 
   const ex=[];
-  const cornN=num(S.cornVal), slN=num(S.slVal);
   const exL={
-    lvh_corn: cornN!==null?"признаки ГЛЖ по Корнелльскому вольтажу (R aVL + S V3 = "+cornN+" мм, с асимметричной косонисходящей депрессией ST)":"вольтажные признаки ГЛЖ по Корнелльскому индексу",
-    lvh_sl: slN!==null?"ГЛЖ по признаку Соколова-Лайона (S V1 + R V5/V6 = "+slN+" мм)":"вольтажные признаки ГЛЖ по Соколову-Лайону",
-    erp:"синдром ранней реполяризации желудочков (элевация ST с вогнутостью кверху, зазубрина на колене R)",
+    lvh_calc: (()=>{
+      const results=computeLvh();
+      const positives=results.filter(r=>r.computed && r.positive);
+      if(!positives.length) return "";
+      const narrNames={sl:"индекс Соколова–Лайона",ravl:"R aVL",cornell:"Корнельский вольтажный индекс",cornellProd:"Корнельское произведение"};
+      const parts=positives.map(r=>narrNames[r.id]+" = "+fmt(r.value)+" "+r.unit);
+      return "признаки ГЛЖ ("+parts.join("; ")+")";
+    })(),
+    erp:"феномен ранней реполяризации желудочков (элевация ST с вогнутостью кверху, зазубрина на колене R)",
     wpw:"феномен WPW (укорочение PQ, дельта-волна)",
     glyc:"гликозидный эффект (корытообразное смещение сегмента ST вниз от изолинии)",
-    ekg_pacer:(()=>{ let t="функционирование ЭКС в режиме "+S.pacerMode; if(S.pacerSpk) t+=", регистрируются спайки стимулятора"; if(S.pacerCap) t+=", "+S.pacerCap; if(S.pacerNote.trim()) t+=", "+S.pacerNote.trim(); return t; })(),
     pericard:"диффузные изменения (вероятно, перикардит: конкордантная элевация ST, депрессия PR)",
     hyperK:"признаки гиперкалиемии (высокий остроконечный зубец T, расширение QRS)"
   };
   for(const k in S.extra){ if(S.extra[k]&&exL[k]) ex.push(exL[k]); }
-  if(ex.length){ const t="Дополнительные паттерны: "+ex.join("; ")+"."; lines.push(t); full.push(t); }
+  if(ex.length){ const t="Дополнительные паттерны: "+ex.join("; ")+"."; full.push(t); }
 
   let summary = summarize();
-  lines.push(""); lines.push(summary);
   full.push(""); full.push(summary);
 
   if(S.dyn){
@@ -813,17 +851,18 @@ function build(){
     let d;
     if(S.dyn==="new") d=S.dynDate?base+" (в сравнении с ЭКГ от "+fmtDate(S.dynDate)+").":base+".";
     else d=base+(S.dynDate?" в сравнении с архивной ЭКГ от "+fmtDate(S.dynDate)+".":".");
-    lines.push(d); full.push(d);
+    full.push(d);
   }
 
-  $("out").textContent = (S.mode==="full"?full:lines).join("\n");
+  $("out").textContent = full.join("\n");
+  renderLvhResults();
   runValidations();
   saveState();
   $("pPosition").value = S.pPosition;
 }
 
 function summarize(){
-  const anyData = num(S.hr)!==null||num(S.pq)!==null||num(S.qrs)!==null||num(S.qt)!==null||num(S.qtcManual)!==null||num(S.alpha)!==null||S.dyn!==""||S.rz!==""||num(S.vnoV1)!==null||num(S.vnoV6)!==null||["stIso","stElOn","stDepOn"].some(k=>S[k])||S.reg||S.irreg||S.sinusArr||Object.values(S.pWave).some(Boolean)||Object.values(S.blocks).some(Boolean)||Object.values(S.pathQ).some(Boolean)||Object.values(S.tWave).some(Boolean)||Object.values(S.tLoc).some(Boolean)||Object.values(S.extra).some(Boolean)||S.avBlock!=="none";
+  const anyData = S.rhythm!=="sinus"||num(S.hr)!==null||num(S.pq)!==null||num(S.qrs)!==null||num(S.qt)!==null||num(S.qtcManual)!==null||num(S.alpha)!==null||S.dyn!==""||S.rz!==""||num(S.vnoV1)!==null||num(S.vnoV6)!==null||["stIso","stElOn","stDepOn"].some(k=>S[k])||S.reg||S.irreg||S.sinusArr||Object.values(S.pWave).some(Boolean)||Object.values(S.blocks).some(Boolean)||Object.values(S.pathQ).some(Boolean)||Object.values(S.tWave).some(Boolean)||Object.values(S.tLoc).some(Boolean)||Object.values(S.extra).some(Boolean)||S.avBlock!=="none";
   if(!anyData) return "Заключение: данные ЭКГ не внесены — заполните блоки 1–6.";
   const af=(S.rhythm==="af"||S.rhythm==="flutter");
   const tPath=["negcor","negasym","smooth","iso","tall","disc"].some(k=>S.tWave[k]);
@@ -858,13 +897,18 @@ function summarize(){
   if(S.stElOn||S.stDepOn||S.tWave.negcor||S.tWave.negasym) findings.push("ишемические изменения сегмента ST-T");
   else if(tPath) findings.push("неспецифические нарушения процессов реполяризации");
   if(Object.values(S.blocks).some(Boolean)||(num(S.qrs)>=120)) findings.push("нарушения внутрижелудочковой проводимости");
-  if(Object.values(S.extra).some(Boolean)) findings.push("дополнительные находки (см. описание)");
+  if(S.extra.lvh_calc) findings.push("ЭКГ-признаки гипертрофии левого желудочка");
+  if(S.extra.erp) findings.push("феномен ранней реполяризации желудочков");
+  if(S.extra.wpw) findings.push("феномен WPW");
+  if(S.extra.glyc) findings.push("признаки гликозидного эффекта");
+  if(S.extra.pericard) findings.push("изменения, характерные для перикардита");
+  if(S.extra.hyperK) findings.push("признаки гиперкалиемии");
 
-  return prefix+" "+findings.join(", ")+".";
+  return prefix+" "+findings.map(f=>f.charAt(0).toUpperCase()+f.slice(1)+".").join(" ");
 }
 
 function leadStr(obj){ const m={II:"II",III:"III",aVF:"aVF",V1:"V1",V4:"V4",V6:"V6"}; const keys=Object.keys(obj).filter(k=>obj[k]); return keys.length?keys.map(k=>m[k]||k).join(", "):""; }
-function zoneStr(obj){ const m={ii_iii_avf:"II, III, aVF",v1_v4:"V1–V4",v5_v6:"V5–V6, I, aVL"}; const keys=Object.keys(obj).filter(k=>obj[k]); return keys.length?keys.map(k=>m[k]||k).join("; "):""; }
+function zoneStr(obj){ const m={i:"I",ii:"II",iii:"III",avr:"aVR",avl:"aVL",avf:"aVF",v1:"V1",v2:"V2",v3:"V3",v4:"V4",v5:"V5",v6:"V6"}; const order=["i","ii","iii","avr","avl","avf","v1","v2","v3","v4","v5","v6"]; const keys=order.filter(k=>obj[k]); return keys.length?keys.map(k=>m[k]).join(", "):""; }
 function tLocNominative(obj){ const m={inf:"нижней стенки",ant:"передней стенки",lat:"боковой стенки",post:"задне-базальных отделов"}; const keys=Object.keys(obj).filter(k=>obj[k]&&k!=="glob"); const parts=keys.map(k=>m[k]||k); if(obj.glob){ if(parts.length) return "диффузно по всем стенкам ЛЖ, преимущественно "+parts.join(", "); return "диффузно по всем стенкам ЛЖ"; } return parts.length?"в области "+parts.join(", "):""; }
 function num(v){ const n=parseFloat(v); return isNaN(n)?null:n; }
 
@@ -872,19 +916,88 @@ function refreshHrLabel(){ const isCHSZh=(S.rhythm==="af"||S.rhythm==="flutter"|
 
 function markField(id,cls){ const el=$(id); el.classList.remove("fld-warn","fld-bad"); if(cls) el.classList.add(cls==="bad"?"fld-bad":"fld-warn"); }
 
+function computeLvh(){
+  const raVL=num(S.lvhRaVL), sV3=num(S.lvhSV3), sV1=num(S.lvhSV1), rV56=num(S.lvhRV56max), qrs=num(S.qrs);
+  const isF=S.sex==="f";
+  const results=[];
+  if(sV1!==null && rV56!==null){
+    const v=sV1+rV56;
+    results.push({ id:"sl", name:"Индекс Соколова–Лайона", value:v, unit:"мм", thresholdText:"норма ≤ 35", positive:v>35, computed:true });
+  } else {
+    results.push({ id:"sl", name:"Индекс Соколова–Лайона", computed:false });
+  }
+  if(raVL!==null){
+    results.push({ id:"ravl", name:"R aVL", value:raVL, unit:"мм", thresholdText:"норма < 11", positive:raVL>=11, computed:true });
+  } else {
+    results.push({ id:"ravl", name:"R aVL", computed:false });
+  }
+  if(sV3!==null && raVL!==null){
+    const v=sV3+raVL;
+    const thr=isF?20:28;
+    const thrText="норма ≤ "+thr+" для "+(isF?"женщин":"мужчин");
+    results.push({ id:"cornell", name:"Корнельский вольтажный индекс", value:v, unit:"мм", thresholdText:thrText, positive:v>thr, computed:true });
+  } else {
+    results.push({ id:"cornell", name:"Корнельский вольтажный индекс", computed:false });
+  }
+  if(sV3!==null && raVL!==null && qrs!==null){
+    const base=sV3+raVL+(isF?6:0);
+    const v=base*qrs;
+    results.push({ id:"cornellProd", name:"Корнельское произведение", value:v, unit:"мм×мс", thresholdText:"норма ≤ 2440", positive:v>2440, computed:true });
+  } else {
+    results.push({ id:"cornellProd", name:"Корнельское произведение", computed:false });
+  }
+  return results;
+}
+
+function renderLvhResults(){
+  const wrap=$("lvhResults");
+  if(!wrap) return;
+  const results=computeLvh();
+  const anyComputed=results.some(r=>r.computed);
+  if(!anyComputed){
+    wrap.innerHTML='<div class="lvh-row na">Введите значения амплитуд для расчёта</div>';
+    return;
+  }
+  let html="";
+  for(const r of results){
+    if(!r.computed){
+      html+='<div class="lvh-row na"><span class="lvh-name">'+r.name+'</span><span class="lvh-val">—</span></div>';
+    } else {
+      const cls=r.positive?"hit":"ok";
+      html+='<div class="lvh-row '+cls+'"><span class="lvh-name">'+r.name+'</span><span class="lvh-val">'+fmt(r.value)+' '+r.unit+'</span><span class="lvh-norm">'+r.thresholdText+'</span></div>';
+    }
+  }
+  const positives=results.filter(r=>r.computed && r.positive);
+  let vClass, vText;
+  if(positives.length){
+    vClass="hit";
+    vText="Признаки ГЛЖ выявлены"+(positives.length>1?" по нескольким критериям.":".");
+  } else {
+    vClass="ok";
+    vText="Признаки ГЛЖ не выявлены.";
+  }
+  html+='<div class="lvh-verdict '+vClass+'">'+vText+'</div>';
+  const raVL=num(S.lvhRaVL), sV3=num(S.lvhSV3), qrs=num(S.qrs);
+  if(raVL!==null && sV3!==null && qrs===null){
+    html+='<div class="lvh-qrs-hint">⚠ Заполните QRS в блоке 2, чтобы рассчитать Корнельское произведение.</div>';
+  }
+  wrap.innerHTML=html;
+}
+
 function runValidations(){
   ["b1Hint","pHint","qrsHint","pqHint","qtHint","stHint","b6Hint"].forEach(id=>{ const el=$(id); if(el) el._buf=[]; });
   ["pq","qrs","qt","qtcManual","stElMax","stDepMax"].forEach(id=>markField(id,null));
+  if(S.extra.lvh_calc && num(S.lvhRaVL)!==null && num(S.lvhSV3)!==null && num(S.qrs)===null) markField("qrs","warn");
   const pqVal=num(S.pq), qrsVal=num(S.qrs);
   if(qrsVal>=120){ markField("qrs","warn"); if(!Object.values(S.blocks).some(Boolean)) addHint("qrsHint","warn","⚠ Уширение комплекса QRS (>=120 мс). Выберите вид нарушения проводимости в Блоке 4."); }
   if((S.blocks.pblnpnpg||S.blocks.pbpnpnpg)&&qrsVal!==null&&qrsVal<120) addHint("qrsHint","warn","⚠ Для полной блокады ножки пучка Гиса характерна ширина QRS >= 120 мс.");
   if(pqVal>200){ markField("pq","warn"); if(S.avBlock==="none") addHint("pqHint","warn","⚠ Удлинение PQ ("+pqVal+" мс) соответствует АВ-блокаде I степени."); }
   else if(pqVal!==null&&pqVal<120){ markField("pq","warn"); if(S.extra.wpw) addHint("pqHint","ok","✓ Интервал PQ укорочен в соответствии с синдромом WPW."); else addHint("pqHint","warn","⚠ Укорочение PQ (<120 мс). Проверьте наличие дельта-волны и WPW."); }
   if(S.avBlock==="avb1"&&pqVal!==null&&pqVal<=200) addHint("pqHint","warn","⚠ Выбрана АВ-блокада I степени, но интервал PQ в норме (<= 200 мс).");
-  const qtcM=num(S.qtcManual); const qtc=qtcAll(num(S.qt),num(S.hr)); const threshold=S.sex==="f"?460:450; let checkV=null,src="";
-  if(qtcM!==null){ checkV=Math.round(qtcM); src=" (с плёнки)"; markField("qtcManual",checkV>threshold?"bad":null); }
-  else if(qtc){ const cf=S.qtcFormula==="auto"?(num(S.hr)<60||num(S.hr)>90?"fridericia":"bazett"):S.qtcFormula; checkV=Math.round(qtc[cf]); src=" (по "+(cf==="bazett"?"Bazett":"Fridericia")+")"; if(checkV>threshold) markField("qt","bad"); }
-  if(checkV!==null){ if(checkV>500) addHint("qtHint","bad","🔴 Критическое уширение интервала QTc ("+checkV+src+" мс) — высокий риск развития полиморфной ЖТ типа «пируэт»!"); else if(checkV>threshold) addHint("qtHint","bad","🔴 Зарегистрировано удлинение интервала QTc ("+checkV+src+" мс, норма <= "+threshold+")."); }
+  const qtcM=num(S.qtcManual); const qtc=qtcAll(num(S.qt),num(S.hr)); const qtcNorm=S.sex==="f"?460:440; const qtcBorder=qtcNorm+10; const sexLabel=S.sex==="f"?"женщин":"мужчин"; let checkV=null,src="";
+  if(qtcM!==null){ checkV=Math.round(qtcM); src=" (с плёнки)"; markField("qtcManual", checkV>qtcBorder?"bad":(checkV>qtcNorm?"warn":null)); }
+  else if(qtc){ const cf=S.qtcFormula==="auto"?(num(S.hr)<60||num(S.hr)>90?"fridericia":"bazett"):S.qtcFormula; checkV=Math.round(qtc[cf]); src=" (по "+(cf==="bazett"?"Bazett":"Fridericia")+")"; markField("qt", checkV>qtcBorder?"bad":(checkV>qtcNorm?"warn":null)); }
+  if(checkV!==null){ if(checkV>500) addHint("qtHint","bad","🔴 Критическое удлинение интервала QTc ("+checkV+src+" мс) — высокий риск развития полиморфной ЖТ типа «пируэт»!"); else if(checkV>qtcBorder) addHint("qtHint","bad","🔴 QTc "+checkV+src+" мс удлинён: норма ≤ "+qtcNorm+" мс для "+sexLabel+"."); else if(checkV>qtcNorm) addHint("qtHint","warn","⚠ QTc "+checkV+src+" мс — верхняя граница нормы для "+sexLabel+" (норма ≤ "+qtcNorm+" мс)."); }
   if((S.rhythm==="af"||S.rhythm==="flutter")&&S.pWave.sinus) addHint("pHint","bad","🔴 При фибрилляции/трепетании предсердий синусовый зубец P невозможен.");
   if(S.rhythm==="sinus"&&S.pWave.absent) addHint("pHint","bad","🔴 При синусовом ритме зубец P не может отсутствовать — снимите один из флагов.");
   if(S.pWave.mitrale&&S.pWave.pulmonale) addHint("pHint","warn","⚠ Одновременно отмечены P-mitrale и P-pulmonale — уточните, какая перегрузка преобладает.");
@@ -900,8 +1013,6 @@ function runValidations(){
   if(S.stDepOn&&!Object.values(S.stDepLeads).some(Boolean)) addHint("stHint","warn","⚠ Депрессия ST: локализация не указана.");
   if(S.tWave.pos&&["negcor","negasym","smooth","iso","tall","disc"].some(k=>S.tWave[k])) addHint("stHint","warn","⚠ Отмечен и «T положительный», и патологические варианты T.");
   if(S.stElOn&&S.stDepOn) addHint("stHint","warn","⚠ Одновременно выбраны элевация и депрессия ST.");
-  if(S.stIso&&(S.stElOn||S.stDepOn)) addHint("stHint","warn","⚠ ST на изолинии выбран одновременно со смещением ST.");
-  if(S.extra.ekg_pacer&&S.rhythm!=="pacer") addHint("b6Hint","warn","⚠ Описана работа стимулятора, но ритм в блоке 1 не ЭКС.");
   if(S.extra.erp&&S.stElOn) addHint("b6Hint","warn","⚠ Ранняя реполяризация сама даёт элевацию ST — проверьте дубль с блоком 5.");
   if(S.extra.pericard&&S.stElOn) addHint("b6Hint","warn","⚠ При перикардите элевация диффузная; отмечена локальная — исключите ИМ.");
   flushHints();
@@ -927,6 +1038,7 @@ function bind(){
   $("rhythm").onchange=e=>{
     S.rhythm=e.target.value;
     $("pacerModeWrap").style.display=S.rhythm==="pacer"?"flex":"none";
+    $("pacerDetailWrap").style.display=S.rhythm==="pacer"?"block":"none";
     $("flutterRatioWrap").style.display=S.rhythm==="flutter"?"flex":"none";
     if(S.rhythm==="sinus"){ pWaveObj.sinus=true; pWaveObj.absent=false; pWaveObj.f=false; pWaveObj.F=false; pWaveObj.neg23=false; S.reg=true; S.irreg=false; S.sinusArr=false; S.pPosition=""; }
     else if(S.rhythm==="af"){ pWaveObj.sinus=false; pWaveObj.absent=true; pWaveObj.f=true; pWaveObj.F=false; S.reg=false; S.irreg=true; S.sinusArr=false; S.pPosition=""; pWaveObj.mitrale=false; pWaveObj.pulmonale=false; pWaveObj.neg23=false; pWaveObj.wandering=false; }
@@ -934,7 +1046,7 @@ function bind(){
     else if(S.rhythm==="avnodal"){ pWaveObj.sinus=false; pWaveObj.absent=false; pWaveObj.f=false; pWaveObj.F=false; pWaveObj.neg23=true; S.reg=true; S.irreg=false; S.sinusArr=false; S.pPosition=""; }
     else if(S.rhythm==="svt"||S.rhythm==="vt"){ pWaveObj.sinus=false; pWaveObj.absent=true; pWaveObj.f=false; pWaveObj.F=false; pWaveObj.neg23=false; S.reg=true; S.irreg=false; S.sinusArr=false; S.pPosition=""; }
     else if(S.rhythm==="atrial"){ pWaveObj.sinus=false; pWaveObj.absent=false; pWaveObj.f=false; pWaveObj.F=false; pWaveObj.neg23=false; S.reg=true; S.irreg=false; S.sinusArr=false; S.pPosition=""; }
-    else if(S.rhythm==="pacer"){ pWaveObj.sinus=false; S.reg=true; S.irreg=false; S.sinusArr=false; S.pPosition=""; pWaveObj.mitrale=false; pWaveObj.pulmonale=false; pWaveObj.neg23=false; pWaveObj.wandering=false; }
+    else if(S.rhythm==="pacer"){ pWaveObj.sinus=false; S.reg=false; S.irreg=false; S.sinusArr=false; S.pPosition=""; pWaveObj.mitrale=false; pWaveObj.pulmonale=false; pWaveObj.neg23=false; pWaveObj.wandering=false; }
     syncUI(); refreshHrLabel(); build();
   };
   $("pacerMode").value=S.pacerMode; $("pacerMode").onchange=e=>{ S.pacerMode=e.target.value; refreshHrLabel(); build(); };
@@ -944,14 +1056,12 @@ function bind(){
   $("hr").value=S.hr; $("hr").oninput=e=>{ S.hr=e.target.value; refreshHrLabel(); build(); };
   bindChips("regularity",regObj);
   $("axis").value=S.axis; $("axis").onchange=e=>{ S.axis=e.target.value; build(); };
-  $("sex").value=S.sex;
   // Пол пациента — toggle-кнопки
   document.querySelectorAll("#sexToggle button").forEach(b => {
     b.onclick = () => {
       document.querySelectorAll("#sexToggle button").forEach(x => x.classList.remove("on"));
       b.classList.add("on");
       S.sex = b.dataset.s;
-      $("sex").value = S.sex;
       build();
     };
   });
@@ -981,14 +1091,12 @@ function bind(){
   bindChips("tWave",S.tWave);
   bindChips("tLoc",S.tLoc);
   bindChips("extra",S.extra);
-  $("cornVal").value=S.cornVal; $("cornVal").oninput=e=>{ S.cornVal=e.target.value; build(); };
-  $("slVal").value=S.slVal; $("slVal").oninput=e=>{ S.slVal=e.target.value; build(); };
-  $("extra").addEventListener("change",()=>{ $("lvhCornWrap").style.display=S.extra.lvh_corn?"flex":"none"; $("lvhSlWrap").style.display=S.extra.lvh_sl?"flex":"none"; $("pacerWrap").style.display=S.extra.ekg_pacer?"block":"none"; build(); });
+  ["lvhRaVL","lvhSV3","lvhSV1","lvhRV56max"].forEach(id=>{ $(id).value=S[id]; $(id).oninput=e=>{ S[id]=e.target.value; build(); }; });
+  $("extra").addEventListener("change",()=>{ $("lvhCalcWrap").style.display=S.extra.lvh_calc?"block":"none"; build(); });
   $("pacerSpk").checked=S.pacerSpk; $("pacerSpkLbl").classList.toggle("on",S.pacerSpk);
   $("pacerSpk").onchange=e=>{ S.pacerSpk=e.target.checked; $("pacerSpkLbl").classList.toggle("on",S.pacerSpk); build(); };
   $("pacerCap").value=S.pacerCap; $("pacerCap").onchange=e=>{ S.pacerCap=e.target.value; build(); };
   $("pacerNote").value=S.pacerNote; $("pacerNote").oninput=e=>{ S.pacerNote=e.target.value; build(); };
-  document.querySelectorAll("#modeToggle button").forEach(b=>{ b.onclick=()=>{ document.querySelectorAll("#modeToggle button").forEach(x=>x.classList.remove("on")); b.classList.add("on"); S.mode=b.dataset.m; build(); }; });
   $("dyn").value=S.dyn; $("dyn").onchange=e=>{ S.dyn=e.target.value; build(); };
   $("dynDate").value=S.dynDate; $("dynDate").onchange=e=>{ S.dynDate=e.target.value; build(); };
   $("pWave").addEventListener("change",()=>{ refreshPVisibility(); build(); });
@@ -1016,6 +1124,9 @@ function updatePWaveVisibility(){
     if(!input) return;
     input.closest(".chk").classList.toggle("hidden", hideKeys.includes(k));
   });
+  document.querySelectorAll("#regularity .chk").forEach(el=>{
+    el.classList.toggle("hidden", S.rhythm==="pacer");
+  });
 }
 
 function syncUI(){
@@ -1027,14 +1138,13 @@ function syncUI(){
   syncChips("stIsoWrap",stIsoProxy);
   syncChips("tWave",S.tWave); syncChips("tLoc",S.tLoc);
   syncChips("extra",S.extra);
-  $("rhythm").value=S.rhythm; $("pacerMode").value=S.pacerMode; $("flutterRatio").value=S.flutterRatio; $("hr").value=S.hr; $("axis").value=S.axis; $("sex").value=S.sex; $("avBlock").value=S.avBlock;
+  $("rhythm").value=S.rhythm; $("pacerMode").value=S.pacerMode; $("flutterRatio").value=S.flutterRatio; $("hr").value=S.hr; $("axis").value=S.axis; $("avBlock").value=S.avBlock;
   // Синхронизация toggle пола
   document.querySelectorAll("#sexToggle button").forEach(b => {
     b.classList.toggle("on", b.dataset.s === S.sex);
   });
-  ["alpha","pq","qrs","qt","qtcManual","fAmp","rz","vnoV1","vnoV6","stElType","stElMax","stDepType","stDepMax","cornVal","slVal"].forEach(id=>{ $(id).value=S[id]; });
+  ["alpha","pq","qrs","qt","qtcManual","fAmp","rz","vnoV1","vnoV6","stElType","stElMax","stDepType","stDepMax","lvhRaVL","lvhSV3","lvhSV1","lvhRV56max"].forEach(id=>{ $(id).value=S[id]; });
   $("qtcFormula").value=S.qtcFormula; $("dyn").value=S.dyn; $("dynDate").value=S.dynDate;
-  document.querySelectorAll("#modeToggle button").forEach(b=>b.classList.toggle("on",b.dataset.m===S.mode));
   $("pacerModeWrap").style.display=S.rhythm==="pacer"?"flex":"none";
   $("flutterRatioWrap").style.display=S.rhythm==="flutter"?"flex":"none";
   $("stElBody").style.display=S.stElOn?"block":"none";
@@ -1042,9 +1152,8 @@ function syncUI(){
   refreshPVisibility();
   $("pPositionWrap").style.display = S.rhythm==="avnodal" ? "block" : "none";
   $("pPosition").value = S.pPosition;
-  $("lvhCornWrap").style.display=S.extra.lvh_corn?"flex":"none";
-  $("lvhSlWrap").style.display=S.extra.lvh_sl?"flex":"none";
-  $("pacerWrap").style.display=S.extra.ekg_pacer?"block":"none";
+  $("lvhCalcWrap").style.display=S.extra.lvh_calc?"block":"none";
+  $("pacerDetailWrap").style.display=S.rhythm==="pacer"?"block":"none";
   $("pacerSpk").checked=S.pacerSpk; $("pacerSpkLbl").classList.toggle("on",S.pacerSpk);
   $("pacerCap").value=S.pacerCap; $("pacerNote").value=S.pacerNote;
   refreshHrLabel();
@@ -1056,7 +1165,7 @@ function syncChips(cid,obj){ document.querySelectorAll("#"+cid+" .chk").forEach(
 function copyText(t){ if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(t).then(()=>toast("Скопировано")).catch(()=>fallbackCopy(t)); else fallbackCopy(t); }
 function fallbackCopy(t){ const ta=document.createElement("textarea"); ta.value=t; ta.style.position="fixed"; ta.style.opacity="0"; document.body.appendChild(ta); ta.select(); try{ document.execCommand("copy"); toast("Скопировано"); }catch(e){ toast("Ошибка"); } document.body.removeChild(ta); }
 
-function defaultState(){ return { rhythm:"sinus",pacerMode:"AAI",hr:"",reg:false,irreg:false,sinusArr:false,pPosition:"",sex:"m",flutterRatio:"2:1",axis:"normal",alpha:"",pq:"",qrs:"",qt:"",qtcManual:"",qtcFormula:"auto",avBlock:"none",pWave:{sinus:false,absent:false,f:false,F:false,mitrale:false,pulmonale:false,neg23:false,wandering:false},fAmp:"",pLeads:{},blocks:{pblnpnpg:false,pbpnpnpg:false,bpvlnpng:false,bzvlnpng:false,bifasc:false,nsivcd:false},pathQ:{inf:false,ant:false,lat:false,post:false},rz:"",vnoV1:"",vnoV6:"",stElOn:false,stElLeads:{},stElType:"convex",stElMax:"",recip:false,stDepOn:false,stDepLeads:{},stDepType:"horiz",stDepMax:"",stIso:false,tWave:{pos:false,negcor:false,negasym:false,smooth:false,iso:false,tall:false,disc:false},tLoc:{inf:false,ant:false,lat:false,glob:false},extra:{lvh_corn:false,lvh_sl:false,erp:false,wpw:false,glyc:false,ekg_pacer:false,pericard:false,hyperK:false},cornVal:"",slVal:"",mode:"brief",dyn:"",dynDate:"",pacerSpk:false,pacerCap:"",pacerNote:"" }; }
+function defaultState(){ return { rhythm:"sinus",pacerMode:"AAI",hr:"",reg:false,irreg:false,sinusArr:false,pPosition:"",sex:"m",flutterRatio:"2:1",axis:"normal",alpha:"",pq:"",qrs:"",qt:"",qtcManual:"",qtcFormula:"auto",avBlock:"none",pWave:{sinus:false,absent:false,f:false,F:false,mitrale:false,pulmonale:false,neg23:false,wandering:false},fAmp:"",pLeads:{},blocks:{pblnpnpg:false,pbpnpnpg:false,bpvlnpng:false,bzvlnpng:false,bifasc:false,nsivcd:false},pathQ:{inf:false,ant:false,lat:false,post:false},rz:"",vnoV1:"",vnoV6:"",stElOn:false,stElLeads:{},stElType:"convex",stElMax:"",recip:false,stDepOn:false,stDepLeads:{},stDepType:"horiz",stDepMax:"",stIso:false,tWave:{pos:false,negcor:false,negasym:false,smooth:false,iso:false,tall:false,disc:false},tLoc:{inf:false,ant:false,lat:false,glob:false},extra:{lvh_calc:false,erp:false,wpw:false,glyc:false,pericard:false,hyperK:false},lvhRaVL:"",lvhSV3:"",lvhSV1:"",lvhRV56max:"",dyn:"",dynDate:"",pacerSpk:false,pacerCap:"",pacerNote:"" }; }
 
 function mergeInto(target, src){
   for (const k in src){
