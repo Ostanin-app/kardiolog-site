@@ -29,6 +29,8 @@
   .fb-btn.ghost{background:transparent;}
   .fb-btn.danger{color:var(--red-deep);border-color:var(--red);}
   .fb-btn.danger:hover{background:var(--red-soft);color:var(--red-deep);}
+  .fb-btn:disabled{opacity:.55;cursor:default;background:var(--surface);color:var(--muted);border-color:var(--border);}
+  .fb-btn:disabled:hover{border-color:var(--border);color:var(--muted);}
 
   .fb-layout{display:flex;align-items:flex-start;gap:0;}
   .fb-nav{
@@ -164,6 +166,7 @@
     <button class="fb-btn" id="btnExportMd">Экспорт в MD</button>
     <button class="fb-btn" id="btnExportJson">Экспорт JSON</button>
     <button class="fb-btn" id="btnImport">Импорт JSON</button>
+    <button class="fb-btn" id="btnRefreshSeed" title="Заменить эталонные формулировки свежими из файла сайта. Ваши личные фразы, категории и отметки ★ не затрагиваются.">↻ Обновить эталонную базу</button>
     <button class="fb-btn danger ghost" id="btnClear">Очистить фразы</button>
     <input type="file" id="fileInput" accept=".json" style="display:none">
   </div>
@@ -860,6 +863,7 @@ function render(){
   renderNav();
   renderItems();
   updateCollectBar();
+  refreshSeedLabel();
 }
 
 function renderNav(){
@@ -1195,6 +1199,128 @@ function importJSON(file){
   };
   reader.readAsText(file);
 }
+
+/* ---------- обновление эталонной базы из SEED ----------
+   Браузер хранит базу в localStorage и читает её раньше SEED, поэтому
+   правки эталона в файле сайта сами по себе у пользователя не появляются.
+   Кнопка «↻ Обновить эталонную базу» переносит эталон в localStorage:
+     • заменяет текст/заголовок/теги у карточек, чей id есть в SEED;
+     • добавляет карточки, которых в базе ещё нет (в конец категории);
+     • предлагает удалить карточки, исключённые из эталона;
+     • личные фразы пользователя, его категории и отметки ★ не трогает.
+   Порядок карточек в категории сохраняется. */
+
+/* Id эталонных карточек, исключённых из SEED. Сюда нужно добавлять id всякий
+   раз, когда карточка убирается из эталона, — иначе она останется у тех,
+   кто уже открывал сайт. med1 «Бета-блокатор (метопролол/бисопролол)»
+   разделён на «Бисопролол (при АГ)» и «Бисопролол (при ХСН)». */
+const RETIRED_SEED_IDS = ["med1"];
+
+function seedIndex(){
+  const m = new Map();
+  for(const c of SEED.categories) for(const it of c.items) m.set(it.id, {catId:c.id, catName:c.name, item:it});
+  return m;
+}
+
+function sameItem(a, b){
+  const n = t => (t||"").trim();
+  return n(a.text)===n(b.text)
+      && n(a.title)===n(b.title)
+      && (a.tags||[]).join("\u0000")===(b.tags||[]).join("\u0000");
+}
+
+/* Сравнивает базу пользователя с эталоном. Ничего не меняет. */
+function seedDiff(){
+  const idx = seedIndex();
+  const res = {update:[], add:[], retired:[], missingCats:[], own:0, inSync:0};
+  const seen = new Set();
+  for(const c of data.categories){
+    for(const it of c.items){
+      const s = idx.get(it.id);
+      if(!s){
+        if(RETIRED_SEED_IDS.includes(it.id)) res.retired.push({id:it.id, cat:c.name, label:it.title||it.text.slice(0,60)});
+        else res.own++;
+        continue;
+      }
+      seen.add(it.id);
+      if(sameItem(it, s.item)) res.inSync++;
+      else res.update.push({id:it.id, cat:c.name, label:it.title||s.item.title||it.id});
+    }
+  }
+  const haveCats = new Set(data.categories.map(c=>c.id));
+  for(const [id, s] of idx){
+    if(seen.has(id)) continue;
+    if(!haveCats.has(s.catId)){ if(!res.missingCats.includes(s.catName)) res.missingCats.push(s.catName); continue; }
+    res.add.push({id, cat:s.catName, label:s.item.title||id});
+  }
+  return res;
+}
+
+/* Счётчик на кнопке: видно, есть ли что обновлять. */
+function refreshSeedLabel(){
+  const btn = document.getElementById("btnRefreshSeed");
+  if(!btn) return;
+  const d = seedDiff();
+  const n = d.update.length + d.add.length + d.retired.length;
+  btn.textContent = n ? "↻ Обновить эталонную базу ("+n+")" : "↻ Эталонная база актуальна";
+  btn.disabled = !n;
+  btn.classList.toggle("primary", !!n);
+}
+
+function applySeed(d){
+  const idx = seedIndex();
+  // 1) содержимое эталонных карточек — из SEED (fav и позиция сохраняются)
+  for(const c of data.categories){
+    for(const it of c.items){
+      const s = idx.get(it.id);
+      if(!s) continue;
+      it.text  = s.item.text;
+      it.title = s.item.title || "";
+      it.tags  = (s.item.tags||[]).slice();
+    }
+  }
+  // 2) карточки, исключённые из эталона
+  const retiredIds = new Set(d.retired.map(x=>x.id));
+  for(const id of retiredIds) selected.delete(id);
+  if(retiredIds.size){
+    for(const c of data.categories) c.items = c.items.filter(it=>!retiredIds.has(it.id));
+  }
+  // 3) новые эталонные карточки — в конец своей категории
+  let added = 0;
+  for(const c of SEED.categories){
+    const target = data.categories.find(x=>x.id===c.id);
+    if(!target) continue;
+    const have = new Set(target.items.map(i=>i.id));
+    for(const it of c.items){
+      if(have.has(it.id)) continue;
+      target.items.push(JSON.parse(JSON.stringify(it)));
+      added++;
+    }
+  }
+  save(); render();
+  const parts = ["заменено "+d.update.length, "добавлено "+added];
+  if(retiredIds.size) parts.push("удалено "+retiredIds.size);
+  toast("Эталон обновлён: "+parts.join(", "));
+}
+
+function refreshSeed(){
+  const d = seedDiff();
+  const n = d.update.length + d.add.length + d.retired.length;
+  if(!n){ toast("Эталонная база уже актуальна"); return; }
+  const L = ["Обновить эталонные формулировки из файла сайта?", ""];
+  if(d.update.length)  L.push("• заменить текст, заголовок и теги у "+d.update.length+" эталонных карточек;");
+  if(d.add.length)     L.push("• добавить новых эталонных карточек: "+d.add.length+" ("+d.add.slice(0,6).map(x=>x.label).join("; ")+(d.add.length>6?"; …":"")+");");
+  if(d.retired.length) L.push("• удалить исключённые из эталона: "+d.retired.map(x=>x.label).join("; ")+";");
+  if(d.missingCats.length) L.push("• категории "+d.missingCats.join(", ")+" у вас удалены — эталонные фразы в них не добавляются;");
+  L.push("");
+  L.push("Не затрагиваются: ваши личные фразы ("+d.own+" шт.), ваши категории, отметки ★ и порядок карточек.");
+  if(d.update.length) L.push("Ваши ручные правки в эталонных карточках будут перезаписаны.");
+  L.push("");
+  L.push("Рекомендуется сначала сделать «Экспорт JSON» — это резервная копия.");
+  if(!confirm(L.join("\n"))) return;
+  applySeed(d);
+}
+
 function download(content, filename, type){
   const blob=new Blob([content], {type:(type||"text/plain")+";charset=utf-8"});
   const url=URL.createObjectURL(blob);
@@ -1235,6 +1361,7 @@ document.getElementById("btnExportJson").onclick=exportJSON;
 document.getElementById("btnClear").onclick=clearAll;
 document.getElementById("fileInput").onchange=(e)=>{ if(e.target.files[0]) importJSON(e.target.files[0]); e.target.value=""; };
 document.getElementById("btnImport").onclick=()=>document.getElementById("fileInput").click();
+document.getElementById("btnRefreshSeed").onclick=refreshSeed;
 document.getElementById("btnCollect").onclick=collectBlock;
 document.getElementById("btnClearSel").onclick=()=>{ selected.clear(); render(); };
 
