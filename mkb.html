@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Подбор кода МКБ-10 — Кардио-справочник</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+  .mkb-cats { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .mkb-cat {
+    font: inherit; font-weight: 700; font-size: 14px; cursor: pointer;
+    background: var(--surface); color: var(--primary-2);
+    border: 1.5px solid var(--border); border-radius: 20px; padding: 9px 16px;
+    transition: border-color .15s, background .15s, color .15s;
+  }
+  .mkb-cat:hover { border-color: var(--primary); }
+  .mkb-cat[aria-pressed="true"] { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .mkb-cat .mkb-cat-hint { display: block; font-size: 11.5px; font-weight: 500; opacity: .75; }
+
+  .mkb-grid { display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 16px; align-items: start; }
+  @media (max-width: 900px) { .mkb-grid { grid-template-columns: 1fr; } }
+  .mkb-side { display: flex; flex-direction: column; gap: 16px; }
+
+  .mkb-crumbs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+  .mkb-crumb {
+    display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px;
+    background: var(--primary-softer); border: 1px solid var(--border); color: var(--text-2);
+    border-radius: 16px; padding: 5px 6px 5px 11px;
+  }
+  .mkb-crumb button {
+    font: inherit; font-size: 13px; line-height: 1; cursor: pointer; border: none;
+    background: transparent; color: var(--muted); padding: 2px 5px; border-radius: 8px;
+  }
+  .mkb-crumb button:hover { background: var(--red-soft); color: var(--red-deep); }
+
+  .mkb-q-head { display: flex; align-items: flex-start; gap: 8px; }
+  .mkb-q-label { font-size: 19px; font-weight: 700; color: var(--text); line-height: 1.35; }
+  .mkb-info {
+    font: inherit; font-size: 12px; font-weight: 800; cursor: pointer; flex: 0 0 auto;
+    width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--primary);
+    background: var(--primary-soft); color: var(--primary); line-height: 1;
+  }
+  .mkb-info[aria-expanded="true"] { background: var(--primary); color: #fff; }
+  .mkb-tip-wrap { position: relative; }
+  .mkb-tip {
+    position: absolute; left: 0; top: calc(100% + 8px); z-index: 70;
+    max-width: 420px; background: #20242e; color: #f4f6fa; font-size: 12.8px; line-height: 1.5;
+    padding: 10px 12px; border-radius: 9px; box-shadow: 0 10px 26px rgba(15, 23, 42, .28);
+  }
+  .mkb-tip[hidden] { display: none; }
+
+  .mkb-answers { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+  .mkb-answer {
+    font: inherit; font-weight: 700; font-size: 15px; cursor: pointer;
+    padding: 12px 22px; border-radius: 11px; border: 1.5px solid var(--primary);
+    background: var(--surface); color: var(--primary-2); transition: background .15s, color .15s;
+  }
+  .mkb-answer:hover { background: var(--primary-soft); }
+  .mkb-answer.mkb-answer-main { background: var(--primary); color: #fff; }
+  .mkb-answer.mkb-answer-main:hover { background: var(--primary-2); }
+  .mkb-answer.mkb-answer-unsure { border-color: var(--border-strong); color: var(--muted); }
+  .mkb-answer .mkb-key { font-size: 11.5px; font-weight: 600; opacity: .7; margin-left: 6px; }
+  .mkb-hintline { margin-top: 12px; font-size: 12.5px; color: var(--muted); }
+
+  .mkb-code {
+    font-family: var(--mono); font-size: 34px; font-weight: 800; color: var(--primary-2);
+    letter-spacing: .5px;
+  }
+  .mkb-code-label { font-size: 15px; line-height: 1.5; color: var(--text); margin-top: 6px; }
+  .mkb-note {
+    margin-top: 12px; font-size: 13.5px; line-height: 1.55; color: var(--text-2);
+    background: var(--orange-soft); border-left: 3px solid var(--orange-deep);
+    border-radius: 8px; padding: 10px 12px;
+  }
+  .mkb-note.mkb-note-info { background: var(--primary-softer); border-left-color: var(--primary); }
+  .mkb-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }
+  .mkb-act {
+    font: inherit; font-size: 13.5px; font-weight: 700; cursor: pointer;
+    padding: 9px 15px; border-radius: 9px; border: 1.5px solid var(--border-strong);
+    background: var(--surface); color: var(--text-2);
+  }
+  .mkb-act:hover { border-color: var(--primary); color: var(--primary-2); }
+  .mkb-act.mkb-act-main { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .mkb-act.mkb-act-main:hover { background: var(--primary-2); color: #fff; }
+  .mkb-act[aria-pressed="true"] { background: var(--primary-soft); border-color: var(--primary); color: var(--primary-2); }
+
+  details.mkb-why { margin-top: 14px; }
+  details.mkb-why summary {
+    cursor: pointer; font-size: 13.5px; font-weight: 700; color: var(--primary);
+    padding: 4px 2px;
+  }
+  .mkb-why-list { margin: 10px 0 0; padding-left: 20px; font-size: 13.5px; line-height: 1.6; color: var(--text-2); }
+  .mkb-why-list li { margin-bottom: 4px; }
+
+  .mkb-cands { display: grid; gap: 10px; margin-top: 14px; }
+  .mkb-cand {
+    border: 1.5px solid var(--border); border-radius: 11px; padding: 12px 14px; background: var(--surface-2);
+  }
+  .mkb-cand .mkb-cand-code { font-family: var(--mono); font-size: 19px; font-weight: 800; color: var(--primary-2); }
+  .mkb-cand .mkb-cand-label { font-size: 13.5px; color: var(--text); margin-top: 4px; line-height: 1.5; }
+
+  .mkb-search-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
+  .mkb-search {
+    flex: 1 1 240px; font: inherit; font-size: 14px; padding: 11px 13px;
+    border: 1.5px solid var(--border); border-radius: 10px; background: var(--surface); color: var(--text);
+  }
+  .mkb-search:focus { outline: none; border-color: var(--primary); }
+  .mkb-list { display: grid; gap: 8px; }
+  .mkb-row {
+    display: flex; gap: 12px; align-items: flex-start; justify-content: space-between;
+    border: 1.5px solid var(--border); border-radius: 10px; padding: 11px 13px; background: var(--surface);
+  }
+  .mkb-row-code { font-family: var(--mono); font-size: 15px; font-weight: 800; color: var(--primary-2); }
+  .mkb-row-label { font-size: 13.5px; color: var(--text); margin-top: 3px; line-height: 1.5; }
+  .mkb-row-syn { font-size: 12px; color: var(--muted); margin-top: 3px; }
+  .mkb-row-acts { display: flex; gap: 6px; flex: 0 0 auto; }
+  .mkb-mini {
+    font: inherit; font-size: 14px; line-height: 1; cursor: pointer; padding: 7px 9px;
+    border-radius: 8px; border: 1.5px solid var(--border-strong); background: var(--surface); color: var(--text-2);
+  }
+  .mkb-mini:hover { border-color: var(--primary); color: var(--primary-2); }
+  .mkb-mini[aria-pressed="true"] { background: var(--primary-soft); border-color: var(--primary); color: var(--primary-2); }
+
+  .mkb-basket { display: grid; gap: 6px; }
+  .mkb-basket-row {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 8px;
+    border-bottom: 1px solid var(--border); padding: 7px 0; font-size: 13px;
+  }
+  .mkb-basket-row:last-child { border-bottom: none; }
+  .mkb-basket-code { font-family: var(--mono); font-weight: 800; color: var(--primary-2); }
+  .mkb-basket-label { color: var(--text-2); font-size: 12.5px; line-height: 1.4; }
+
+  .mkb-favs { display: flex; flex-wrap: wrap; gap: 6px; }
+  .mkb-fav {
+    font: inherit; font-family: var(--mono); font-size: 13px; font-weight: 700; cursor: pointer;
+    padding: 6px 11px; border-radius: 16px; border: 1.5px solid var(--border); background: var(--surface-2);
+    color: var(--primary-2);
+  }
+  .mkb-fav:hover { border-color: var(--primary); }
+
+  .mkb-empty { color: var(--muted); font-size: 13.5px; font-style: italic; }
+  .mkb-toast {
+    position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px);
+    background: #20242e; color: #f4f6fa; font-size: 13.5px; padding: 11px 17px; border-radius: 10px;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, .3); opacity: 0; pointer-events: none;
+    transition: opacity .18s, transform .18s; z-index: 90;
+  }
+  .mkb-toast.mkb-toast-show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  .mkb-open-item { border-bottom: 1px solid var(--border); padding: 10px 0; font-size: 13.5px; }
+  .mkb-open-item:last-child { border-bottom: none; }
+  .mkb-open-item b { color: var(--text); }
+  .mkb-open-current { color: var(--muted); font-size: 12.5px; margin-top: 4px; }
+
+  .mkb-meta { font-size: 12.5px; color: var(--muted); margin-bottom: 14px; line-height: 1.5; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="topnav">
+    <span class="brand">Кардио-справочник</span>
+    <div class="nav-links">
+      <a href="index.html">Главная</a>
+      <a href="planner.html">План обследований</a>
+      <a href="ag.html">АГ</a>
+      <a href="formulas.html">Формулировки</a>
+      <a href="ecg.html">ЭКГ</a>
+      <a href="mkb.html" class="active">Коды МКБ</a>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <div class="page-title">Подбор кода МКБ-10</div>
+  <div class="page-sub">Ответьте на 2–4 коротких вопроса — помощник покажет код и точную формулировку для карты.</div>
+  <div class="mkb-meta" id="mkbMeta"></div>
+
+  <div class="mkb-cats" id="mkbCats" role="group" aria-label="Разделы кодов"></div>
+
+  <div class="mkb-grid">
+
+    <div class="mkb-main">
+      <div class="section-card" id="mkbPanel" aria-live="polite">
+        <div class="mkb-empty">Выберите раздел выше.</div>
+      </div>
+
+      <details class="section-card" id="mkbOpenCard" style="margin-top:16px;">
+        <summary style="cursor:pointer;font-weight:700;color:var(--primary);">Открытые вопросы для врача</summary>
+        <div id="mkbOpenList" style="margin-top:10px;"></div>
+      </details>
+    </div>
+
+    <aside class="mkb-side">
+      <div class="section-card">
+        <div style="font-weight:800;font-size:15px;margin-bottom:10px;">Корзина кодов</div>
+        <div class="mkb-basket" id="mkbBasket"></div>
+        <div class="mkb-actions">
+          <button class="mkb-act mkb-act-main" id="mkbCopyCodes">Скопировать коды</button>
+          <button class="mkb-act" id="mkbCopyFull">С формулировками</button>
+          <button class="mkb-act" id="mkbClearBasket">Очистить</button>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div style="font-weight:800;font-size:15px;margin-bottom:10px;">Избранное</div>
+        <div class="mkb-favs" id="mkbFavs"></div>
+      </div>
+    </aside>
+
+  </div>
+
+</div>
+
+<div class="mkb-toast" id="mkbToast" role="status" aria-live="polite"></div>
+
+<footer>Конспект клинических рекомендаций Минздрава РФ. Не заменяет оригинальные документы. Проверяйте актуальную редакцию.</footer>
+
+<script src="mkb_engine.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var FAV_KEY = 'mkbFavV1';
+  var BASKET_KEY = 'mkbBasketV1';
+
+  var model = null;
+  var state = { categoryId: null, answers: {}, query: '', selectedCode: null };
+  var favorites = readStore(FAV_KEY);
+  var basket = readStore(BASKET_KEY);
+
+  var panel = document.getElementById('mkbPanel');
+  var catsBox = document.getElementById('mkbCats');
+  var basketBox = document.getElementById('mkbBasket');
+  var favsBox = document.getElementById('mkbFavs');
+  var openList = document.getElementById('mkbOpenList');
+  var metaBox = document.getElementById('mkbMeta');
+  var toastBox = document.getElementById('mkbToast');
+  var toastTimer = null;
+
+  /* ---------- вспомогательное ---------- */
+  function el(tag, opts, kids) {
+    var node = document.createElement(tag);
+    opts = opts || {};
+    Object.keys(opts).forEach(function (key) {
+      var value = opts[key];
+      if (value === null || value === undefined) return;
+      if (key === 'class') node.className = value;
+      else if (key === 'text') node.textContent = value;
+      else if (key === 'icon') node.innerHTML = value;
+      else if (key.indexOf('on') === 0) node.addEventListener(key.slice(2), value);
+      else node.setAttribute(key, value);
+    });
+    (kids || []).forEach(function (kid) { if (kid) node.appendChild(kid); });
+    return node;
+  }
+
+  function readStore(key) {
+    try {
+      var raw = localStorage.getItem(key);
+      var parsed = raw ? JSON.parse(raw) : [];
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) { return []; }
+  }
+
+  function writeStore(key, value) {
+    try { localStorage.setItem(key, JSON.stringify(value)); }
+    catch (error) { toast('Не удалось сохранить: хранилище браузера недоступно'); }
+  }
+
+  function toast(message) {
+    toastBox.textContent = message;
+    toastBox.classList.add('mkb-toast-show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { toastBox.classList.remove('mkb-toast-show'); }, 2200);
+  }
+
+  function copyText(text) {
+    if (!text) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(function () { toast('Скопировано'); }, function () { fallbackCopy(text); });
+    } else fallbackCopy(text);
+  }
+
+  function fallbackCopy(text) {
+    var area = document.createElement('textarea');
+    area.value = text;
+    area.setAttribute('readonly', '');
+    area.style.position = 'fixed';
+    area.style.top = '-1000px';
+    document.body.appendChild(area);
+    area.select();
+    var ok = false;
+    try { ok = document.execCommand('copy'); } catch (error) { ok = false; }
+    document.body.removeChild(area);
+    toast(ok ? 'Скопировано' : 'Не удалось скопировать — выделите текст вручную');
+  }
+
+  function shortLabel(code) {
+    var entry = MkbEngine.codeOf(model, code);
+    if (!entry) return '';
+    var text = entry.label;
+    var cut = text.indexOf('(');
+    if (cut > 12) text = text.slice(0, cut).trim();
+    return text.length > 70 ? text.slice(0, 68) + '…' : text;
+  }
+
+  /* ---------- разделы ---------- */
+  function renderCategories() {
+    catsBox.textContent = '';
+    model.categories.forEach(function (category) {
+      var button = el('button', {
+        class: 'mkb-cat', type: 'button',
+        'aria-pressed': state.categoryId === category.id ? 'true' : 'false',
+        onclick: function () { selectCategory(category.id); }
+      }, [
+        el('span', { text: category.label }),
+        el('span', { class: 'mkb-cat-hint', text: category.hint || '' })
+      ]);
+      catsBox.appendChild(button);
+    });
+  }
+
+  function selectCategory(id) {
+    state.categoryId = id;
+    state.answers = {};
+    state.query = '';
+    state.selectedCode = null;
+    renderCategories();
+    renderPanel();
+    syncHash();
+  }
+
+  /* ---------- панель ---------- */
+  function renderPanel() {
+    panel.textContent = '';
+    if (!state.categoryId) {
+      panel.appendChild(el('div', { class: 'mkb-empty', text: 'Выберите раздел выше.' }));
+      return;
+    }
+    var category = model.categories.filter(function (c) { return c.id === state.categoryId; })[0];
+    if (!category) return;
+    if (category.kind === 'list') renderList(category);
+    else renderDecision(category);
+  }
+
+  function renderCrumbs(tableId) {
+    var box = el('div', { class: 'mkb-crumbs' });
+    var explained = MkbEngine.explain(model, tableId, state.answers);
+    explained.forEach(function (item) {
+      box.appendChild(el('span', { class: 'mkb-crumb' }, [
+        el('span', { text: item.label + ': ' + item.text }),
+        el('button', {
+          type: 'button', title: 'Убрать ответ', 'aria-label': 'Убрать ответ: ' + item.label,
+          text: '✕',
+          onclick: function () {
+            delete state.answers[item.id];
+            state.selectedCode = null;
+            renderPanel();
+            syncHash();
+          }
+        })
+      ]));
+    });
+    if (explained.length) {
+      box.appendChild(el('button', {
+        class: 'mkb-act', type: 'button', text: 'Начать заново',
+        onclick: function () { state.answers = {}; state.selectedCode = null; renderPanel(); syncHash(); }
+      }));
+    }
+    return explained.length ? box : null;
+  }
+
+  function renderDecision(category) {
+    var crumbs = renderCrumbs(category.tableId);
+    if (crumbs) panel.appendChild(crumbs);
+
+    if (state.selectedCode) {
+      renderCodeCard(state.selectedCode, null, true);
+      return;
+    }
+
+    var result = MkbEngine.resolve(model, category.tableId, state.answers);
+    if (result.status === 'question') renderQuestion(result, category);
+    else if (result.status === 'code') renderCodeCard(result.code, result, false);
+    else if (result.status === 'ambiguous') renderAmbiguous(result, category);
+    else panel.appendChild(el('div', { class: 'mkb-note', text: 'Для такого сочетания ответов код в таблице не описан. Уберите лишние ответы в подсказках выше.' }));
+  }
+
+  function renderQuestion(result, category) {
+    var question = model.questions[result.question];
+    var tipId = 'mkbTip_' + question.label.replace(/\W+/g, '');
+    var tip = el('div', { class: 'mkb-tip', id: tipId, role: 'tooltip', hidden: 'hidden', text: question.tooltip });
+    var info = el('button', {
+      class: 'mkb-info', type: 'button', 'aria-expanded': 'false', 'aria-describedby': tipId,
+      'aria-label': 'Подсказка к вопросу', text: 'i',
+      onclick: function (event) {
+        event.stopPropagation();
+        var open = info.getAttribute('aria-expanded') === 'true';
+        info.setAttribute('aria-expanded', open ? 'false' : 'true');
+        if (open) tip.setAttribute('hidden', 'hidden'); else tip.removeAttribute('hidden');
+      }
+    });
+    var head = el('div', { class: 'mkb-q-head' }, [
+      el('div', { class: 'mkb-q-label', id: 'mkbQ_' + result.question, text: question.label }),
+      el('span', { class: 'mkb-tip-wrap' }, [info, tip])
+    ]);
+    var answers = el('div', { class: 'mkb-answers', role: 'group', 'aria-labelledby': 'mkbQ_' + result.question });
+    var options = [];
+
+    if (question.type === 'bool') {
+      options.push({ label: 'Да', value: true, main: true });
+      options.push({ label: 'Нет', value: false, main: false });
+    } else {
+      (question.values || []).forEach(function (entry) {
+        options.push({ label: entry.label, value: entry.value, main: false });
+      });
+    }
+    options.forEach(function (option, index) {
+      answers.appendChild(el('button', {
+        class: 'mkb-answer' + (option.main ? ' mkb-answer-main' : ''), type: 'button',
+        onclick: function () { answer(result.question, option.value); }
+      }, [
+        el('span', { text: option.label }),
+        el('span', { class: 'mkb-key', text: String(index + 1) })
+      ]));
+    });
+    answers.appendChild(el('button', {
+      class: 'mkb-answer mkb-answer-unsure', type: 'button',
+      onclick: function () { answer(result.question, null); }
+    }, [
+      el('span', { text: 'Уточню' }),
+      el('span', { class: 'mkb-key', text: String(options.length + 1) })
+    ]));
+
+    panel.appendChild(el('div', {}, [
+      head, answers,
+      el('div', { class: 'mkb-hintline', text: 'Клавиши 1–' + (options.length + 1) + ' выбирают ответ. «Уточню» покажет возможные коды без догадки.' })
+    ]));
+  }
+
+  function answer(qid, value) {
+    state.answers[qid] = value;
+    state.selectedCode = null;
+    renderPanel();
+    syncHash();
+  }
+
+  function renderCodeCard(codeId, result, saved) {
+    var entry = MkbEngine.codeOf(model, codeId);
+    if (!entry) return;
+    panel.appendChild(el('div', { class: 'mkb-code', text: entry.code }));
+    panel.appendChild(el('div', { class: 'mkb-code-label', text: entry.label }));
+
+    if (saved) {
+      panel.appendChild(el('div', { class: 'mkb-note mkb-note-info', text: 'Закреплённый код — выбран из избранного, а не подобран по ответам.' }));
+    }
+    if (entry.note) panel.appendChild(el('div', { class: 'mkb-note mkb-note-info', text: entry.note }));
+    if (result && result.row && result.row.note) panel.appendChild(el('div', { class: 'mkb-note', text: result.row.note }));
+    if (result && result.row && result.row.hint) panel.appendChild(el('div', { class: 'mkb-note', text: result.row.hint }));
+    if (!saved && result && result.unknowns && result.unknowns.length) {
+      var labels = result.unknowns.map(function (qid) { return model.questions[qid].label.toLowerCase(); });
+      panel.appendChild(el('div', { class: 'mkb-note mkb-note-info', text: 'Не уточнено: ' + labels.join(', ') + '. На выбранный код это не влияет.' }));
+    }
+
+    var inBasket = basket.indexOf(entry.code) !== -1;
+    var inFav = favorites.indexOf(entry.code) !== -1;
+    var basketBtn = el('button', {
+      class: 'mkb-act mkb-act-main', type: 'button', 'aria-pressed': inBasket ? 'true' : 'false',
+      text: inBasket ? 'В корзине' : 'В корзину',
+      onclick: function () { addToBasket(entry.code, basketBtn); }
+    });
+    var favBtn = el('button', {
+      class: 'mkb-act', type: 'button', 'aria-pressed': inFav ? 'true' : 'false',
+      text: inFav ? '★ В избранном' : '☆ В избранное',
+      onclick: function () { toggleFav(entry.code, favBtn); }
+    });
+
+    var actions = el('div', { class: 'mkb-actions' }, [
+      basketBtn,
+      el('button', { class: 'mkb-act', type: 'button', text: 'Скопировать код', onclick: function () { copyText(entry.code); } }),
+      el('button', { class: 'mkb-act', type: 'button', text: 'Скопировать с формулировкой', onclick: function () { copyText(entry.code + ' — ' + entry.label); } }),
+      favBtn,
+      el('button', { class: 'mkb-act', type: 'button', text: 'Ссылка на этот подбор', onclick: function () { copyText(location.href); } }),
+      el('button', {
+        class: 'mkb-act', type: 'button', text: 'Начать заново',
+        onclick: function () { state.answers = {}; state.selectedCode = null; renderPanel(); syncHash(); }
+      })
+    ]);
+    panel.appendChild(actions);
+
+    if (!saved) {
+      var why = MkbEngine.explain(model, model.categories.filter(function (c) { return c.id === state.categoryId; })[0].tableId, state.answers);
+      var list = el('ul', { class: 'mkb-why-list' });
+      why.forEach(function (item) {
+        list.appendChild(el('li', { text: item.label + ' — ' + item.text }));
+      });
+      panel.appendChild(el('details', { class: 'mkb-why' }, [
+        el('summary', { text: 'Почему этот код?' }),
+        list
+      ]));
+    }
+  }
+
+  function renderAmbiguous(result, category) {
+    panel.appendChild(el('div', { class: 'mkb-q-label', text: 'Нужно уточнить' }));
+    panel.appendChild(el('div', { class: 'mkb-hintline', text: 'По этим ответам возможны несколько кодов. Выберите подходящий — или вернитесь и уточните ответы.' }));
+    var box = el('div', { class: 'mkb-cands' });
+    result.codes.forEach(function (codeId) {
+      var entry = MkbEngine.codeOf(model, codeId);
+      if (!entry) return;
+      box.appendChild(el('div', { class: 'mkb-cand' }, [
+        el('div', { class: 'mkb-cand-code', text: entry.code }),
+        el('div', { class: 'mkb-cand-label', text: entry.label }),
+        entry.note ? el('div', { class: 'mkb-cand-label', text: entry.note }) : null,
+        el('div', { class: 'mkb-actions' }, [
+          el('button', {
+            class: 'mkb-act mkb-act-main', type: 'button', text: 'Это верный код',
+            onclick: function () { state.selectedCode = entry.code; renderPanel(); syncHash(); }
+          }),
+          el('button', { class: 'mkb-act', type: 'button', text: 'Скопировать', onclick: function () { copyText(entry.code); } })
+        ])
+      ]));
+    });
+    panel.appendChild(box);
+    var crumbs = MkbEngine.explain(model, category.tableId, state.answers).filter(function (item) { return item.value === null; });
+    if (crumbs.length) {
+      panel.appendChild(el('div', { class: 'mkb-actions' }, [
+        el('button', {
+          class: 'mkb-act', type: 'button', text: 'Вернуться к вопросам',
+          onclick: function () {
+            crumbs.forEach(function (item) { delete state.answers[item.id]; });
+            renderPanel();
+            syncHash();
+          }
+        })
+      ]));
+    }
+  }
+
+  /* ---------- списки кодов ---------- */
+  function renderList(category) {
+    if (category.treeStatus === 'planned') {
+      panel.appendChild(el('div', { class: 'mkb-note mkb-note-info', text: 'Пошаговый подбор для этого раздела в разработке — пока список кодов с поиском.' }));
+    }
+    var input = el('input', {
+      class: 'mkb-search', type: 'search', id: 'mkbSearch', value: state.query,
+      placeholder: 'Код, диагноз или синоним: ГБ, ПИКС, стент, одышка…',
+      'aria-label': 'Поиск по кодам',
+      oninput: function (event) { state.query = event.target.value; renderListBody(category); }
+    });
+    panel.appendChild(el('div', { class: 'mkb-search-row' }, [input]));
+    var body = el('div', { id: 'mkbListBody' });
+    panel.appendChild(body);
+    renderListBody(category);
+  }
+
+  function renderListBody(category) {
+    var body = document.getElementById('mkbListBody');
+    if (!body) return;
+    body.textContent = '';
+    var found = MkbEngine.searchCodes(model, state.query, category.id);
+    body.appendChild(el('div', { class: 'mkb-hintline', style: 'margin:0 0 8px', text: 'Найдено кодов: ' + found.length }));
+    if (!found.length) {
+      body.appendChild(el('div', { class: 'mkb-empty', text: 'Ничего не найдено. Попробуйте другое слово или код.' }));
+      return;
+    }
+    var list = el('div', { class: 'mkb-list' });
+    found.forEach(function (entry) {
+      var inFav = favorites.indexOf(entry.code) !== -1;
+      list.appendChild(el('div', { class: 'mkb-row' }, [
+        el('div', {}, [
+          el('div', { class: 'mkb-row-code', text: entry.code }),
+          el('div', { class: 'mkb-row-label', text: entry.label }),
+          entry.note ? el('div', { class: 'mkb-row-syn', text: entry.note }) : null,
+          (entry.synonyms || []).length ? el('div', { class: 'mkb-row-syn', text: 'Синонимы: ' + entry.synonyms.join(', ') }) : null
+        ]),
+        el('div', { class: 'mkb-row-acts' }, [
+          el('button', { class: 'mkb-mini', type: 'button', title: 'Скопировать код', text: '⧉', onclick: function () { copyText(entry.code); } }),
+          el('button', { class: 'mkb-mini', type: 'button', title: 'Добавить в корзину', text: '+', onclick: function () { addToBasket(entry.code, null); } }),
+          el('button', {
+            class: 'mkb-mini', type: 'button', 'aria-pressed': inFav ? 'true' : 'false',
+            title: 'В избранное', text: inFav ? '★' : '☆',
+            onclick: function () { toggleFav(entry.code, null); renderListBody(category); }
+          })
+        ])
+      ]));
+    });
+    body.appendChild(list);
+  }
+
+  /* ---------- корзина и избранное ---------- */
+  function addToBasket(code) {
+    if (basket.indexOf(code) !== -1) { toast('Код ' + code + ' уже в корзине'); return; }
+    basket.push(code);
+    writeStore(BASKET_KEY, basket);
+    renderBasket();
+    renderPanel();
+    toast('Добавлено: ' + code);
+  }
+
+  function renderBasket() {
+    basketBox.textContent = '';
+    if (!basket.length) {
+      basketBox.appendChild(el('div', { class: 'mkb-empty', text: 'Пока пусто. Добавляйте коды кнопкой «В корзину».' }));
+      return;
+    }
+    basket.forEach(function (code) {
+      basketBox.appendChild(el('div', { class: 'mkb-basket-row' }, [
+        el('div', {}, [
+          el('div', { class: 'mkb-basket-code', text: code }),
+          el('div', { class: 'mkb-basket-label', text: shortLabel(code) })
+        ]),
+        el('button', {
+          class: 'mkb-mini', type: 'button', title: 'Убрать из корзины', 'aria-label': 'Убрать ' + code, text: '✕',
+          onclick: function () {
+            basket = basket.filter(function (item) { return item !== code; });
+            writeStore(BASKET_KEY, basket);
+            renderBasket();
+            renderPanel();
+          }
+        })
+      ]));
+    });
+  }
+
+  function toggleFav(code) {
+    if (favorites.indexOf(code) === -1) { favorites.push(code); toast('В избранном: ' + code); }
+    else { favorites = favorites.filter(function (item) { return item !== code; }); toast('Убрано из избранного'); }
+    writeStore(FAV_KEY, favorites);
+    renderFavs();
+  }
+
+  function renderFavs() {
+    favsBox.textContent = '';
+    if (!favorites.length) {
+      favsBox.appendChild(el('div', { class: 'mkb-empty', text: 'Отмечайте частые коды звёздочкой.' }));
+      return;
+    }
+    favorites.forEach(function (code) {
+      favsBox.appendChild(el('button', {
+        class: 'mkb-fav', type: 'button', title: shortLabel(code), text: code,
+        onclick: function () {
+          var current = model.categories.filter(function (category) { return category.id === state.categoryId; })[0];
+          if (!current || current.kind !== 'decision') {
+            var owner = model.categories.filter(function (category) { return category.kind === 'decision'; })[0];
+            if (owner) state.categoryId = owner.id;
+          }
+          state.answers = {};
+          state.selectedCode = code;
+          renderCategories();
+          renderPanel();
+          syncHash();
+        }
+      }));
+    });
+  }
+
+  function renderOpenQuestions() {
+    openList.textContent = '';
+    (model.openQuestions || []).forEach(function (item) {
+      openList.appendChild(el('div', { class: 'mkb-open-item' }, [
+        el('div', {}, [el('b', { text: '• ' }), el('span', { text: item.question })]),
+        el('div', { class: 'mkb-open-current', text: 'Сейчас: ' + item.currentBehaviour })
+      ]));
+    });
+  }
+
+  /* ---------- ссылки-состояния ---------- */
+  function syncHash() {
+    if (!state.categoryId) return;
+    var hash = MkbEngine.buildHash(state.categoryId, state.answers);
+    if (location.hash !== hash) history.replaceState(null, '', hash);
+  }
+
+  function applyHash() {
+    var parsed = MkbEngine.parseHash(location.hash);
+    if (!parsed) return false;
+    var category = model.categories.filter(function (c) { return c.id === parsed.categoryId; })[0];
+    if (!category) return false;
+    state.categoryId = category.id;
+    state.answers = parsed.answers || {};
+    state.selectedCode = null;
+    return true;
+  }
+
+  /* ---------- клавиатура ---------- */
+  function currentOptions() {
+    if (!state.categoryId) return null;
+    var category = model.categories.filter(function (c) { return c.id === state.categoryId; })[0];
+    if (!category || category.kind !== 'decision' || state.selectedCode) return null;
+    var result = MkbEngine.resolve(model, category.tableId, state.answers);
+    if (result.status !== 'question') return null;
+    var question = model.questions[result.question];
+    var options = question.type === 'bool'
+      ? [{ value: true }, { value: false }]
+      : (question.values || []).map(function (entry) { return { value: entry.value }; });
+    options.push({ value: null });
+    return { qid: result.question, options: options };
+  }
+
+  document.addEventListener('keydown', function (event) {
+    if (event.key === 'Escape') {
+      document.querySelectorAll('.mkb-tip').forEach(function (tip) { tip.setAttribute('hidden', 'hidden'); });
+      document.querySelectorAll('.mkb-info').forEach(function (btn) { btn.setAttribute('aria-expanded', 'false'); });
+      return;
+    }
+    var target = event.target;
+    if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable)) return;
+    if (!/^[1-9]$/.test(event.key)) return;
+    var current = currentOptions();
+    if (!current) return;
+    var index = Number(event.key) - 1;
+    if (index >= current.options.length) return;
+    event.preventDefault();
+    answer(current.qid, current.options[index].value);
+  });
+
+  document.addEventListener('click', function (event) {
+    if (event.target.closest && event.target.closest('.mkb-tip-wrap')) return;
+    document.querySelectorAll('.mkb-tip').forEach(function (tip) { tip.setAttribute('hidden', 'hidden'); });
+    document.querySelectorAll('.mkb-info').forEach(function (btn) { btn.setAttribute('aria-expanded', 'false'); });
+  });
+
+  /* ---------- запуск ---------- */
+  document.getElementById('mkbCopyCodes').addEventListener('click', function () {
+    if (!basket.length) { toast('Корзина пуста'); return; }
+    copyText(basket.join('; '));
+  });
+
+  document.getElementById('mkbCopyFull').addEventListener('click', function () {
+    if (!basket.length) { toast('Корзина пуста'); return; }
+    copyText(basket.map(function (code) {
+      var entry = MkbEngine.codeOf(model, code);
+      return entry ? code + ' — ' + entry.label : code;
+    }).join('\n'));
+  });
+
+  document.getElementById('mkbClearBasket').addEventListener('click', function () {
+    if (!basket.length) return;
+    if (!confirm('Очистить корзину кодов?')) return;
+    basket = [];
+    writeStore(BASKET_KEY, basket);
+    renderBasket();
+    renderPanel();
+  });
+
+  window.addEventListener('hashchange', function () {
+    if (applyHash()) { renderCategories(); renderPanel(); }
+  });
+
+  fetch('mkb_codes.json').then(function (response) {
+    if (!response.ok) throw new Error('файл mkb_codes.json не загрузился');
+    return response.json();
+  }).then(function (loaded) {
+    model = loaded;
+    var check = MkbEngine.validate(model);
+    if (check.problems.length) throw new Error('ошибки в данных: ' + check.problems.join('; '));
+    metaBox.textContent = model.classifier.name + ' — ' + model.classifier.edition + '. ' + model.classifier.disclaimer;
+    applyHash();
+    renderCategories();
+    renderPanel();
+    renderBasket();
+    renderFavs();
+    renderOpenQuestions();
+    if (!state.categoryId) {
+      panel.textContent = '';
+      panel.appendChild(el('div', { class: 'mkb-empty', text: 'Выберите раздел выше — например, «АГ».' }));
+    }
+  }).catch(function (error) {
+    panel.textContent = '';
+    panel.appendChild(el('div', { class: 'mkb-note', text: 'Не удалось загрузить справочник: ' + error.message + '. Откройте страницу через локальный сервер или GitHub Pages (файл mkb_codes.json читается по HTTP).' }));
+  });
+
+})();
+</script>
+
+</body>
+</html>
