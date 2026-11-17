@@ -93,6 +93,19 @@
   #an-app .chip button:hover { color: var(--red); }
   #an-app .empty { color: var(--faint); font-size: 13px; }
 
+  #an-app .whytoggle {
+    display: flex; align-items: center; gap: 9px; cursor: pointer; user-select: none;
+    font-size: 13px; color: var(--text-2); padding: 9px 0 0;
+  }
+  #an-app .whytoggle input {
+    appearance: none; -webkit-appearance: none; width: 17px; height: 17px; flex: none; margin: 0;
+    border: 1.5px solid var(--border-strong); border-radius: 5px; background: #fff; position: relative; cursor: pointer;
+  }
+  #an-app .whytoggle input:checked { background: var(--primary); border-color: var(--primary); }
+  #an-app .whytoggle input:checked::after {
+    content: ""; position: absolute; left: 4.5px; top: 1.5px; width: 5px; height: 9px;
+    border: 2px solid #fff; border-top: 0; border-left: 0; transform: rotate(42deg);
+  }
   #an-app .sumrow {
     display: flex; justify-content: space-between; align-items: baseline;
     padding: 10px 0 14px; border-top: 1px solid var(--border); font-size: 14px; color: var(--muted);
@@ -167,6 +180,7 @@
     <aside class="panel">
       <div class="ptitle">Выбранные анализы</div>
       <div class="chips" id="chips"></div>
+      <label class="whytoggle"><input type="checkbox" id="why" checked><span>Обоснование «с целью…» в тексте</span></label>
       <div class="sumrow"><span>Итого</span><b id="sum">0 ₽</b></div>
       <button class="primary" id="build">Собрать</button>
       <div id="warnbox"></div>
@@ -190,6 +204,9 @@
   let sel = new Set();
   try { sel = new Set(JSON.parse(localStorage.getItem('labsel') || '[]')); } catch(e){}
   sel = new Set([...sel].filter(id => byId.has(id)));
+
+  // печатать ли обоснование («с целью …») в тексте назначения
+  let whyOn = localStorage.getItem('labwhy') !== '0';
 
   const $ = s => document.querySelector(s);
   const money = n => n ? n.toLocaleString('ru-RU') + ' ₽' : '—';
@@ -311,7 +328,9 @@
     let orders = 'Лабораторные исследования:\n\n';
     parts.forEach((p, i) => {
       orders += (i + 1) + ') ' + p.title + ':\n';
-      p.tests.forEach(t => { orders += '- ' + t.out + '\n'; });
+      p.tests.forEach(t => {
+        orders += '- ' + t.out + (whyOn && t.why ? ' — ' + t.why : '') + '\n';
+      });
       orders += '\n';
     });
     orders = orders.trimEnd();
@@ -418,6 +437,14 @@
   });
 
   $('#q').addEventListener('input', renderCatalog);
+
+  const whyBox = $('#why');
+  whyBox.checked = whyOn;
+  whyBox.addEventListener('change', () => {
+    whyOn = whyBox.checked;
+    try { localStorage.setItem('labwhy', whyOn ? '1' : '0'); } catch(e){}
+    if ($('#result').innerHTML) renderResult();
+  });
 
   renderCatalog();
   renderPanel();
