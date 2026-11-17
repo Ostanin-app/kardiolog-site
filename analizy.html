@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Анализы — конструктор назначения — Кардио-справочник</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<style>
+  /* ---- страница «Анализы»: свои стили, чтобы не трогать общие ---- */
+  .container-wide { max-width: 1220px; margin: 0 auto; padding: 22px 18px 60px; }
+
+  #an-app {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 400px;
+    gap: 18px;
+    align-items: start;
+  }
+  @media (max-width: 1020px) { #an-app { grid-template-columns: 1fr; } }
+
+  #an-app .searchbar { display: flex; gap: 10px; margin-bottom: 14px; }
+  #an-app input[type=search] {
+    flex: 1; background: var(--surface); border: 1.5px solid var(--border); color: var(--text);
+    padding: 11px 14px; border-radius: 10px; font-size: 14.5px; font-family: var(--font); outline: none;
+  }
+  #an-app input[type=search]:focus { border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+  #an-app input[type=search]::placeholder { color: var(--placeholder); }
+  #an-app button { font-family: var(--font); cursor: pointer; }
+
+  #an-app .ghost {
+    background: var(--surface); border: 1.5px solid var(--border); color: var(--muted);
+    padding: 11px 14px; border-radius: 10px; font-size: 13.5px; font-weight: 600;
+  }
+  #an-app .ghost:hover { color: var(--primary); border-color: var(--primary); background: var(--primary-softer); }
+
+  #an-app .group {
+    margin-bottom: 14px; border: 1.5px solid var(--border); border-radius: var(--r);
+    overflow: hidden; background: var(--surface); box-shadow: var(--shadow-1);
+  }
+  #an-app .ghead {
+    display: flex; align-items: center; gap: 10px; padding: 11px 14px;
+    background: var(--surface-2); border-bottom: 1px solid var(--border);
+  }
+  #an-app .gnum {
+    min-width: 24px; height: 24px; border-radius: 7px; background: var(--primary-soft); color: var(--primary);
+    display: grid; place-items: center; font-size: 12.5px; font-weight: 800;
+  }
+  #an-app .gtitle { font-weight: 700; font-size: 14px; flex: 1; }
+  #an-app .gadd {
+    background: none; border: 0; color: var(--muted); font-size: 12.5px; font-weight: 600;
+    padding: 3px 8px; border-radius: 7px;
+  }
+  #an-app .gadd:hover { color: var(--primary); background: var(--primary-soft); }
+
+  #an-app .item {
+    display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+    cursor: pointer; border-top: 1px solid var(--border); user-select: none;
+  }
+  #an-app .item:first-of-type { border-top: 0; }
+  #an-app .item:hover { background: var(--primary-softer); }
+  #an-app .item input {
+    appearance: none; -webkit-appearance: none; width: 19px; height: 19px; border: 1.5px solid var(--border-strong);
+    border-radius: 6px; flex: none; margin: 0; position: relative; cursor: pointer; background: #fff; transition: .12s;
+  }
+  #an-app .item input:checked { background: var(--primary); border-color: var(--primary); }
+  #an-app .item input:checked::after {
+    content: ""; position: absolute; left: 5.5px; top: 2px; width: 5px; height: 9px;
+    border: 2px solid #fff; border-top: 0; border-left: 0; transform: rotate(42deg);
+  }
+  #an-app .iname { flex: 1; font-size: 14.2px; }
+  #an-app .item.on .iname { font-weight: 600; }
+  #an-app .iprice { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  #an-app .item.on .iprice { color: var(--primary); font-weight: 600; }
+
+  #an-app .panel {
+    position: sticky; top: 18px; background: var(--surface); border: 1.5px solid var(--border);
+    border-radius: var(--r); padding: 16px; box-shadow: var(--shadow-1);
+  }
+  @media (max-width: 1020px) { #an-app .panel { position: static; } }
+  #an-app .ptitle {
+    font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .7px;
+    font-weight: 700; margin-bottom: 10px;
+  }
+  #an-app .chips { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; min-height: 10px; }
+  #an-app .chip {
+    display: inline-flex; align-items: center; gap: 7px; background: var(--primary-soft); color: var(--primary-2);
+    border: 1px solid #cfe0ee; border-radius: 999px; padding: 5px 10px; font-size: 12.5px; max-width: 100%;
+  }
+  #an-app .chip span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #an-app .chip button { flex: none; background: none; border: 0; color: #7f96a8; font-size: 15px; line-height: 1; padding: 0 0 1px; }
+  #an-app .chip button:hover { color: var(--red); }
+  #an-app .empty { color: var(--faint); font-size: 13px; }
+
+  #an-app .sumrow {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 10px 0 14px; border-top: 1px solid var(--border); font-size: 14px; color: var(--muted);
+  }
+  #an-app .sumrow b { color: var(--text); font-size: 19px; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+  #an-app .primary {
+    width: 100%; background: var(--primary); color: #fff; border: 0; border-radius: 10px;
+    padding: 13px 18px; font-size: 15px; font-weight: 700; box-shadow: var(--shadow-primary);
+  }
+  #an-app .primary:hover { background: var(--primary-2); }
+  #an-app .primary:disabled { background: var(--border); color: var(--faint); box-shadow: none; cursor: not-allowed; }
+
+  #an-app .warn {
+    background: var(--orange-soft); border: 1.5px solid #f0cf9a; color: var(--orange-deep);
+    border-radius: 10px; padding: 11px 13px; font-size: 13.2px; margin-top: 14px;
+  }
+  #an-app .warn b { display: block; margin-bottom: 5px; font-size: 13px; }
+
+  #an-app .block { margin-top: 16px; }
+  #an-app .bhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 7px; }
+  #an-app .bhead h3 {
+    margin: 0; font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: .7px; font-weight: 700;
+  }
+  #an-app .copy, #an-app .copyall {
+    background: var(--surface-2); border: 1.5px solid var(--border-strong); color: var(--primary);
+    font-size: 12.5px; font-weight: 700; padding: 6px 12px; border-radius: 9px;
+  }
+  #an-app .copy:hover, #an-app .copyall:hover { background: var(--primary-soft); border-color: var(--primary); }
+  #an-app .copy.ok, #an-app .copyall.ok { background: var(--green-soft); border-color: #a8dcc4; color: var(--green-deep); }
+  #an-app .copyall { width: 100%; margin-top: 14px; padding: 11px; font-size: 14px; }
+
+  #an-app pre.out {
+    margin: 0; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 13px 14px; font: 13.2px/1.6 var(--mono); white-space: pre-wrap; word-break: break-word;
+    color: var(--text); max-height: 430px; overflow: auto;
+  }
+  #an-app .foot-note { color: var(--faint); font-size: 12.5px; margin-top: 18px; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="topnav">
+    <span class="brand">❤️ Кардио-справочник</span>
+    <div class="nav-links">
+      <a href="index.html">Главная</a>
+      <a href="planner.html">План обследований</a>
+      <a href="analizy.html" class="active">Анализы</a>
+      <a href="ag.html">АГ</a>
+      <a href="formulas.html">Формулировки</a>
+      <a href="ecg.html">ЭКГ</a>
+      <a href="mkb.html">Коды МКБ</a>
+    </div>
+  </div>
+</header>
+
+<div class="container-wide">
+
+  <div class="page-title">Анализы — конструктор назначения</div>
+  <div class="page-sub">Отметьте нужные исследования — сайт соберёт текст для медкарты в нужном порядке, объединит подготовку без повторов и предупредит о том, что нельзя сдать за один раз.</div>
+
+  <div id="an-app">
+    <section>
+      <div class="searchbar">
+        <input id="q" type="search" placeholder="Поиск анализа (например: липид, калий, Д-димер)">
+        <button class="ghost" id="clear">Сбросить</button>
+      </div>
+      <div id="catalog"></div>
+    </section>
+
+    <aside class="panel">
+      <div class="ptitle">Выбранные анализы</div>
+      <div class="chips" id="chips"></div>
+      <div class="sumrow"><span>Итого</span><b id="sum">0 ₽</b></div>
+      <button class="primary" id="build">Собрать</button>
+      <div id="warnbox"></div>
+      <div id="result"></div>
+    </aside>
+  </div>
+
+  <div class="foot-note">Цены — из списка лаборатории. Формулировки подготовки носят справочный характер: проверяйте по правилам вашей лаборатории.</div>
+</div>
+
+<footer>Конспект клинических рекомендаций Минздрава РФ. Не заменяет оригинальные документы. Проверяйте актуальную редакцию.</footer>
+
+<script src="analizy-data.js"></script>
+<script>
+(function(){
+  const D = window.LAB_DATA;
+  const TESTS = D.tests;
+  const byId = new Map(TESTS.map(t => [t.id, t]));
+  const gOrder = new Map(D.groups.map((g,i) => [g.id, i]));
+
+  let sel = new Set();
+  try { sel = new Set(JSON.parse(localStorage.getItem('labsel') || '[]')); } catch(e){}
+  sel = new Set([...sel].filter(id => byId.has(id)));
+
+  const $ = s => document.querySelector(s);
+  const money = n => n ? n.toLocaleString('ru-RU') + ' ₽' : '—';
+
+  function save(){ try{ localStorage.setItem('labsel', JSON.stringify([...sel])); }catch(e){} }
+  function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+  /* ---------- каталог ---------- */
+  function renderCatalog(){
+    const q = $('#q').value.trim().toLowerCase();
+    const box = $('#catalog');
+    box.innerHTML = '';
+    D.groups.forEach(g => {
+      const items = TESTS.filter(t => t.g === g.id && (!q || (t.n + ' ' + t.out).toLowerCase().includes(q)));
+      if (!items.length) return;
+      const sec = document.createElement('div');
+      sec.className = 'group';
+      sec.innerHTML =
+        '<div class="ghead"><div class="gnum">' + g.id + '</div>' +
+        '<div class="gtitle">' + esc(g.title) + '</div>' +
+        '<button class="gadd" data-all="' + g.id + '">выбрать все</button></div>';
+      items.forEach(t => {
+        const row = document.createElement('label');
+        row.className = 'item' + (sel.has(t.id) ? ' on' : '');
+        row.innerHTML =
+          '<input type="checkbox" data-id="' + t.id + '"' + (sel.has(t.id) ? ' checked' : '') + '>' +
+          '<div class="iname">' + esc(t.n) + '</div>' +
+          '<div class="iprice">' + money(t.p) + '</div>';
+        sec.appendChild(row);
+      });
+      box.appendChild(sec);
+    });
+    if (!box.children.length) box.innerHTML = '<p class="empty">Ничего не найдено.</p>';
+  }
+
+  /* ---------- панель ---------- */
+  function renderPanel(){
+    const chosen = TESTS.filter(t => sel.has(t.id));
+    const sum = chosen.reduce((a,t) => a + (t.p || 0), 0);
+    $('#sum').textContent = sum.toLocaleString('ru-RU') + ' ₽';
+    const chips = $('#chips');
+    chips.innerHTML = chosen.length ? '' : '<span class="empty">Пока ничего не выбрано</span>';
+    chosen.forEach(t => {
+      const c = document.createElement('span');
+      c.className = 'chip';
+      c.innerHTML = '<span title="' + esc(t.n) + '">' + esc(t.n) + '</span><button data-del="' + t.id + '" title="убрать">×</button>';
+      chips.appendChild(c);
+    });
+    $('#build').disabled = !chosen.length;
+    save();
+  }
+
+  /* ---------- сборка текста ---------- */
+  function buildParts(chosen){
+    const blood = chosen.filter(t => t.mat === 'blood');
+    const urine = chosen.filter(t => t.mat === 'urine');
+    const stool = chosen.filter(t => t.mat === 'stool');
+    const hasStrict = blood.some(t => t.f === 'strict');
+    const parts = [];
+    const sortT = a => a.slice().sort((x,y) =>
+      (gOrder.get(x.g) - gOrder.get(y.g)) || (TESTS.indexOf(x) - TESTS.indexOf(y)));
+
+    if (blood.length){
+      if (hasStrict){
+        const normal = blood.filter(t => !t.post);
+        const sit = blood.filter(t => t.post === 'sit');
+        const lie = blood.filter(t => t.post === 'lie');
+        if (normal.length) parts.push({title: 'Кровь натощак (утром, 8–14 часов без еды)', tests: sortT(normal)});
+        if (sit.length) parts.push({title: 'Кровь натощак, сидя 15–20 минут перед взятием', tests: sortT(sit)});
+        if (lie.length) parts.push({title: 'Кровь натощак, лёжа 30 минут перед взятием', tests: sortT(lie)});
+      } else {
+        parts.push({title: 'Кровь без строгого голодания (можно через 2–3 часа после еды)', tests: sortT(blood)});
+      }
+    }
+    if (urine.length) parts.push({title: 'Утренняя моча', tests: sortT(urine)});
+    if (stool.length) parts.push({title: 'Кал', tests: sortT(stool)});
+    return {parts, hasStrict};
+  }
+
+  function buildWarnings(chosen, parts){
+    const w = [];
+    const hasSit = parts.some(p => /сидя/.test(p.title));
+    const hasLie = parts.some(p => /лёжа/.test(p.title));
+    if (hasSit && hasLie){
+      w.push('Альдостерон и ренин сдают сидя 15–20 минут, метанефрин и норметанефрин — лёжа 30 минут. Одним забором это не совместить: сдавайте в два приёма (можно в один день). В тексте они уже разделены.');
+    }
+    D.duplicates.forEach(d => { if (sel.has(d.a) && sel.has(d.b)) w.push(d.msg); });
+    const zero = chosen.filter(t => !t.p).map(t => t.n);
+    if (zero.length) w.push('Нет цены в списке: ' + zero.join(', ') + ' — уточните стоимость в лаборатории.');
+    return w;
+  }
+
+  /* Уровни голодания: в текст попадает только самый строгий из выбранных */
+  const FAST = {fast_strict: 3, fast_12_14: 2, fast_8_12: 1, fast_soft: 0, fast_none: -1};
+
+  function buildPrep(chosen){
+    const ids = new Set();
+    chosen.forEach(t => (t.prep || []).forEach(id => { if (D.PREP[id]) ids.add(id); }));
+
+    const fastIds = [...ids].filter(id => id in FAST);
+    let best = null;
+    fastIds.forEach(id => { if (best === null || FAST[id] > FAST[best]) best = id; });
+    fastIds.forEach(id => { if (id !== best) ids.delete(id); });
+    if (best && FAST[best] < 1) ids.delete('no_sweet');
+    if (best && FAST[best] >= 1) ids.delete('dna_prep');
+
+    return [...ids]
+      .sort((a,b) => (D.PREP[a].r - D.PREP[b].r) || a.localeCompare(b))
+      .map(id => '- ' + D.PREP[id].t);
+  }
+
+  function compose(){
+    const chosen = TESTS.filter(t => sel.has(t.id));
+    if (!chosen.length) return null;
+    const {parts, hasStrict} = buildParts(chosen);
+    const warns = buildWarnings(chosen, parts);
+    const prep = buildPrep(chosen, hasStrict);
+
+    let orders = 'Лабораторные исследования:\n\n';
+    parts.forEach((p, i) => {
+      orders += (i + 1) + ') ' + p.title + ':\n';
+      p.tests.forEach(t => { orders += '- ' + t.out + '\n'; });
+      orders += '\n';
+    });
+    orders = orders.trimEnd();
+
+    const prepText = prep.length ? 'Подготовка к сдаче анализов:\n' + prep.join('\n') : '';
+    const all = prepText ? orders + '\n\n' + prepText : orders;
+    return {orders, prepText, all, warns};
+  }
+
+  /* ---------- копирование ---------- */
+  function flash(btn, msg, ms){
+    if (!btn.dataset.label) btn.dataset.label = btn.textContent;
+    btn.textContent = msg;
+    btn.classList.add('ok');
+    clearTimeout(btn._timer);
+    btn._timer = setTimeout(() => { btn.textContent = btn.dataset.label; btn.classList.remove('ok'); }, ms || 1600);
+  }
+
+  function selectNode(el){
+    if (!el) return;
+    const r = document.createRange();
+    r.selectNodeContents(el);
+    const s = window.getSelection();
+    s.removeAllRanges(); s.addRange(r);
+    el.scrollIntoView({block: 'nearest'});
+  }
+
+  function copyText(text, btn, pre){
+    if (!text){ flash(btn, 'Текст пустой'); return; }
+
+    let ok = false;
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;padding:0;border:0;opacity:0;';
+      document.body.appendChild(ta);
+      ta.focus(); ta.select(); ta.setSelectionRange(0, text.length);
+      ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch(e){ ok = false; }
+
+    if (ok){ flash(btn, 'Скопировано ✓'); return; }
+
+    const manual = () => { selectNode(pre); flash(btn, 'Выделено — нажмите Ctrl+C', 5000); };
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(() => flash(btn, 'Скопировано ✓'), manual);
+    } else {
+      manual();
+    }
+  }
+
+  /* ---------- вывод ---------- */
+  function renderResult(){
+    const res = compose();
+    const rbox = $('#result');
+    const wbox = $('#warnbox');
+    if (!res){ rbox.innerHTML = ''; wbox.innerHTML = ''; return; }
+
+    wbox.innerHTML = res.warns.length
+      ? '<div class="warn"><b>Обратите внимание</b>' + res.warns.map(w => '• ' + esc(w)).join('<br>') + '</div>'
+      : '';
+
+    rbox.innerHTML =
+      '<div class="block"><div class="bhead"><h3>Назначение (в медкарту)</h3>' +
+      '<button class="copy" data-copy="orders">Копировать</button></div>' +
+      '<pre class="out">' + esc(res.orders) + '</pre></div>' +
+      (res.prepText ? '<div class="block"><div class="bhead"><h3>Подготовка (пациенту)</h3>' +
+      '<button class="copy" data-copy="prep">Копировать</button></div>' +
+      '<pre class="out">' + esc(res.prepText) + '</pre></div>' : '') +
+      '<button class="copyall" data-copy="all">Копировать всё вместе</button>';
+
+    rbox.querySelectorAll('[data-copy]').forEach(b => {
+      b.addEventListener('click', () => {
+        const key = b.dataset.copy;
+        const text = key === 'all' ? res.all : key === 'prep' ? res.prepText : res.orders;
+        const block = b.closest('.block');
+        copyText(text, b, block ? block.querySelector('pre') : rbox.querySelector('pre'));
+      });
+    });
+  }
+
+  /* ---------- события ---------- */
+  document.addEventListener('change', e => {
+    const cb = e.target.closest('input[type=checkbox][data-id]');
+    if (!cb) return;
+    if (cb.checked) sel.add(cb.dataset.id); else sel.delete(cb.dataset.id);
+    cb.closest('.item').classList.toggle('on', cb.checked);
+    renderPanel();
+  });
+
+  document.addEventListener('click', e => {
+    const all = e.target.closest('[data-all]');
+    if (all){
+      const ids = TESTS.filter(t => t.g === all.dataset.all).map(t => t.id);
+      const allOn = ids.every(id => sel.has(id));
+      ids.forEach(id => allOn ? sel.delete(id) : sel.add(id));
+      renderCatalog(); renderPanel(); return;
+    }
+    const del = e.target.closest('[data-del]');
+    if (del){ sel.delete(del.dataset.del); renderCatalog(); renderPanel(); return; }
+    if (e.target.id === 'build'){ renderResult(); }
+    if (e.target.id === 'clear'){ sel.clear(); $('#q').value = ''; renderCatalog(); renderPanel(); renderResult(); }
+  });
+
+  $('#q').addEventListener('input', renderCatalog);
+
+  renderCatalog();
+  renderPanel();
+})();
+</script>
+</body>
+</html>
